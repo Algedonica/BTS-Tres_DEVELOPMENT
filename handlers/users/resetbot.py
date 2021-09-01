@@ -1,5 +1,5 @@
 from datetime import datetime
-from aiogram import types
+from aiogram import types, md
 from loader import dp, bot
 from data.config import user_collection, ticket_collection, staff_collection, settings_collection, states_collection, pmessages_collection, channelid
 from states import ProjectManage,SupportManage
@@ -12,10 +12,10 @@ from aiogram.dispatcher.filters import Command
 from aiogram.dispatcher import FSMContext
 from apscheduler.schedulers.asyncio import AsyncIOScheduler
 from aiogram.types import InputMediaPhoto
-from utils.misc import get_partner_channel, build_support_menu,isadmin,support_role_check, xstr, photoparser, parse_message_by_tag_name, getCryptoData, parse_video_by_tag_name, send_to_channel, issupport
+from utils.misc import build_user_menu, build_operatorcontrol, get_text,get_partner_channel, build_support_menu,isadmin,support_role_check, xstr, photoparser, parse_message_by_tag_name, getCryptoData, parse_video_by_tag_name, send_to_channel, issupport
 
-from keyboards.inline import usersupportchoiceinline, ticket_callback, add_operator_callback, show_support_pages, edit_something_admin, show_cities_pages, knowledge_list_call
-from keyboards.default import userendsupport,defaultmenu, operatorcontrol,operatorshowuser
+from keyboards.inline import meeting_pick_lang,usersupportchoiceinline, ticket_callback, add_operator_callback, show_support_pages, edit_something_admin, show_cities_pages, knowledge_list_call
+
 @dp.message_handler(text="/reset", state=[
     ProjectManage.menu, 
     ProjectManage.awaitingsup,
@@ -27,27 +27,28 @@ async def resetbot_byuser(message: types.Message):
     thisicket=ticket_collection.find_one({"userid": message.from_user.id, "$or":[{'isopen':'onair'},{'isopen':'onpause'}, {'isopen':'created'}]})
     if thisicket!=None:
         counttickets=ticket_collection.find().count()+1
-      
-        if thisicket['operator']=='none':
-            
-            operatorcallmeas='none'
-            operatornickname='none'
-        else:
+
+        if thisicket['operator']!='none':
             operatornickname=staff_collection.find_one({'user_id':thisicket['operator']})
+
             operatorcallmeas=operatornickname['callmeas']
             operatornickname=operatornickname['username']
+            if operatornickname=='none':
+                operatornickname='No nickname'
+            else:
+                operatornickname="@"+operatornickname
+        else:
+            operatornickname='No operator'
+            operatorcallmeas='conversation was early concluded by client'
 
         clientnickname=user_collection.find_one({'user_id':thisicket['userid']})
         clientcallmeas=clientnickname['callmeas']
         clientnickname=clientnickname['username']
 
-        if operatornickname=='none':
-            operatornickname='Без ника'
-        else:
-            operatornickname="@"+operatornickname
+        
 
         if clientnickname=='none':
-            clientnickname='Без ника'
+            clientnickname='No nickname'
         else:
             clientnickname="@"+clientnickname
 
@@ -62,13 +63,12 @@ async def resetbot_byuser(message: types.Message):
                 thisicket['ticketid'],
                 '',
                 '===',
-                "🗣 Закрыт клиентом",
+                "🗣 Closed by client",
                 "<i>"+datetime.now().strftime("%d.%m.%Y / %H:%M")+"</i>"
-
             ]
-        ) 
+        )
         tomad= "\n".join([
-            "Диалог закрыт клиентом ",
+            "Conversation was early concluded by client",
             "<i>"+datetime.now().strftime("%d.%m.%Y / %H:%M")+"</i>"
         ])
         extradd={
@@ -80,6 +80,8 @@ async def resetbot_byuser(message: types.Message):
             "type":"text",
             "mediaid":"none",
             "isread":True}
+
+
 
         photos=await bot.get_user_profile_photos(user_id=thisicket['userid'], limit=1)
 
@@ -102,50 +104,18 @@ async def resetbot_byuser(message: types.Message):
             ticket_collection.update({"userid": message.from_user.id, "$or":[{'isopen':'onair'},{'isopen':'onpause'}, {'isopen':'created'}]},{"$set":{"isopen":"closedbyclient", "messagedata":datamessagehere, 'original_id':mesid['message_id'], 'original_channel':mesid['sender_chat']['id'], 'original_id_partner':'none', 'original_channel_partner':'none',}, '$addToSet': { 'extrafield': extradd } })
 
 
-
-
-
-
-
-
-
-
-
         if thisicket['operator']!='none':
-            html_text2="\n".join(
-                [
-                    '<b>🤖 Бот КриптоКонсалтинг:</b>',
-                    '',
-                    'Клиент завершил диалог, нажмите на ❌ Завершить'
-                ]
-            )
+            html_text2=get_text('user_clientendedconvers_text', message.from_user.id)
             endinline= InlineKeyboardMarkup(row_width=1, inline_keyboard=[
                 [InlineKeyboardButton(
-                    text='❌ Завершить',
+                    text=get_text('user_end_dialogue_text', message.from_user.id),
                     callback_data='operator_end_inline_ticket'
                 )]
             ]) 
             await bot.send_photo(chat_id=thisicket['operator'],parse_mode='HTML', photo=photoparser('clientfinished'), reply_markup=ReplyKeyboardRemove())
             await bot.send_message(chat_id=thisicket['operator'], text=html_text2,parse_mode='HTML',reply_markup=endinline)
-    thisuser=user_collection.find_one({'user_id':message.from_user.id})
-    html_text="\n".join(
-        [
-            '<b>💎 ООО «Крипто Консалтинг»</b>',
-            '',
-            '<b>Профессионально окажем консультацию в сфере криптовалют, а также расскажем о заработке, хранении, уплате налогов и переводах.</b>',
-            '',
-            '🗣 Консультация и обучение',
-            '💲 Доверительное управление',
-            '🎓 Юридическое сопровождение',
-            '🛡 Холодное хранение',
-            '💱 Легальный обмен',
-            '',
-            'Подписывайтесь на наш Telegram канал:',
-            '👉 @cryptocons 👈',
-            # parse_message_by_tag_name(thisuser['citytag'])
-        ]
-    )
-    
+    html_text,defaultmenu=build_user_menu(message.from_user.id)
+    await message.answer_photo(photo=photoparser('operatorticketfinished') ,parse_mode='HTML')
     await message.answer_photo(photo=photoparser('usermainmenu'), caption=html_text,parse_mode='HTML',reply_markup=defaultmenu)
     await ProjectManage.menu.set()
 
@@ -178,12 +148,12 @@ async def resetbot_byoperator(message: types.Message, state: FSMContext):
         clientnickname=clientnickname['username']
 
         if operatornickname=='none':
-            operatornickname='Без ника'
+            operatornickname='No nickname'
         else:
             operatornickname="@"+operatornickname
 
         if clientnickname=='none':
-            clientnickname='Без ника'
+            clientnickname='No nickname'
         else:
             clientnickname="@"+clientnickname
 
@@ -198,12 +168,12 @@ async def resetbot_byoperator(message: types.Message, state: FSMContext):
                 thisicket['ticketid'],
                 '',
                 '===',
-                "👨‍💻 Закрыт оператором",
+                "👨‍💻 Closed by operator",
                 "<i>"+datetime.now().strftime("%d.%m.%Y / %H:%M")+"</i>"
 
             ]
         )
-        # ticket_collection.update({"operator": message.from_user.id, "isopen": "onair"},{"$set":{"isopen":"closedbyoperator","messagedata":datamessagehere}})
+        
         
         html_text2="\n".join(
             [
@@ -212,14 +182,17 @@ async def resetbot_byoperator(message: types.Message, state: FSMContext):
         )
         clientgotomenu= InlineKeyboardMarkup(row_width=1, inline_keyboard=[
             [InlineKeyboardButton(
-                text='✅ Завершить и выйти в меню',
+                text=get_text('support_end_dialogue_button_text',message.from_user.id),
                 callback_data='to_client_menu'
             )]
         ]) 
+        
+
         await bot.send_photo(chat_id=thisicket['userid'],photo=photoparser('operatorticketfinished') ,caption=html_text2,parse_mode='HTML',reply_markup=ReplyKeyboardRemove())
-        await bot.send_message(chat_id=thisicket['userid'],text='Оператор завершил диалог',parse_mode='HTML',reply_markup=clientgotomenu)
+        await bot.send_message(chat_id=thisicket['userid'],text='Оператор завершил диалог',parse_mode='HTML',reply_markup=clientgotomenu)      
+
         tomad= "\n".join([
-            "Диалог закрыт оператором ",
+            "Closed by operator",
             "<i>"+datetime.now().strftime("%d.%m.%Y / %H:%M")+"</i>"
         ])
         extradd={
@@ -254,11 +227,10 @@ async def resetbot_byoperator(message: types.Message, state: FSMContext):
                 ticket_collection.update({"ticketid":thisicket['ticketid']},{"$set":{"isopen":"closedbyoperator","messagedata":datamessagehere,'original_id':mesid['message_id'], 'original_channel':mesid['sender_chat']['id'],'original_id_partner':mesid_partner['message_id'], 'original_channel_partner':mesid_partner['sender_chat']['id']},'$addToSet': { 'extrafield': extradd }})
             ticket_collection.update({"ticketid":thisicket['ticketid']},{"$set":{"isopen":"closedbyoperator","messagedata":datamessagehere,'original_id':mesid['message_id'], 'original_channel':mesid['sender_chat']['id']},'$addToSet': { 'extrafield': extradd }})
             
-    html_text,supportmenubase=build_support_menu(message.from_user.id)
-         
-    await bot.send_message(chat_id=message.from_user.id,text='Успешно',parse_mode='HTML',reply_markup=ReplyKeyboardRemove())
+    html_text,supportmenubase=build_support_menu(message.from_user.id)    
+    await bot.send_message(chat_id=message.from_user.id,text=get_text('support_endeddialogue_text', message.from_user.id) ,parse_mode='HTML',reply_markup=ReplyKeyboardRemove())
     await bot.send_photo(chat_id=message.from_user.id,photo=photoparser("operatormainmenu"), caption=html_text,parse_mode='HTML',reply_markup=supportmenubase ) 
-    await state.reset_state()
+    
     await SupportManage.menu.set()
     
 
@@ -273,7 +245,7 @@ async def reverserole_for_staff(message: types.Message, state: FSMContext):
             query={"user_id":message.from_user.id}, 
             update={ "$set": { 'isreverse': True} }
             )
-        await message.answer('Напишите что-нибудь', reply_markup=ReplyKeyboardRemove()) 
+        await message.answer(get_text('support_vm_func_text',message.from_user.id), reply_markup=ReplyKeyboardRemove()) 
 
 @dp.message_handler(text="/vm", state=[ProjectManage.menu])
 async def reverserole_for_staff(message: types.Message, state: FSMContext):
@@ -284,4 +256,53 @@ async def reverserole_for_staff(message: types.Message, state: FSMContext):
             query={"user_id":message.from_user.id}, 
             update={ "$set": { 'isreverse': False} }
             )
-        await message.answer('Напишите что-нибудь', reply_markup=ReplyKeyboardRemove())    
+        await message.answer(get_text('support_vm_func_text',message.from_user.id), reply_markup=ReplyKeyboardRemove())    
+
+
+
+
+@dp.message_handler(text="/lang", state=[SupportManage.menu, ProjectManage.menu])
+async def change_lang_for_staff(message: types.Message, state: FSMContext):
+    photoo = settings_collection.find_one({"settings":"mainsettings"})
+    langs=photoo['langs']
+    lang_buttons = InlineKeyboardMarkup()
+    for x in langs:
+        lang_buttons.add(InlineKeyboardButton(text=x['lang_name'], callback_data=meeting_pick_lang.new("chnglng",param1=message.from_user.id,param2=x['lang_code'])))
+
+    html_text="\n".join(
+        [
+            'Choose your language:'
+        ]
+    )
+    
+    if issupport(message.from_user.id)==True:
+        await state.reset_state()
+        await SupportManage.change_lang.set()
+    else:
+        await state.reset_state()
+        await ProjectManage.change_lang.set()
+
+    await bot.send_message(chat_id= message.from_user.id, text=html_text,parse_mode='HTML', reply_markup=lang_buttons)
+
+
+@dp.callback_query_handler(meeting_pick_lang.filter(command='chnglng'), state=[SupportManage.change_lang, ProjectManage.change_lang])
+async def picked_lang_meeting(call: types.CallbackQuery, callback_data:dict):
+    param1 = callback_data.get("param1")
+    user_id=int(param1)
+    lang_code=callback_data.get("param2")
+
+    if issupport(user_id)==True:
+        staff_collection.find_and_modify(
+            query={"user_id":user_id},
+            update={"$set":{"lang_code":lang_code}}
+        )
+
+    user_collection.find_and_modify(
+        query={"user_id":user_id},
+        update={"$set":{"lang_code":lang_code}}
+    )
+
+    html_text=get_text('language_changed_text',call.from_user.id)
+    await call.message.delete()
+    await ProjectManage.menu.set()
+    await bot.send_message(chat_id= call.from_user.id, text=html_text,parse_mode='HTML', reply_markup=None)

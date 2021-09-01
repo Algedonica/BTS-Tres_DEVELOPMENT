@@ -16,13 +16,10 @@ from apscheduler.schedulers.asyncio import AsyncIOScheduler
 from aiogram.types import InputMediaPhoto
 from utils.misc import group_valid_check,isadmin,support_role_check, xstr, photoparser, parse_message_by_tag_name, getCryptoData, parse_video_by_tag_name
 
-from keyboards.inline import usersupportchoiceinline, ticket_callback, add_operator_callback, show_support_pages, edit_something_admin, show_cities_pages, knowledge_list_call
-from keyboards.default import userendsupport,defaultmenu, operatorcontrol,operatorshowuser
 
 
-@dp.message_handler(state=SupportManage.menu, text='канал')
-async def channelgetid(message: types.Message):
-    await bot.send_message(chat_id=-1001330118375, text='_',parse_mode='HTML', reply_markup=None)
+
+
 
 
 

@@ -9,15 +9,14 @@ from aiogram.types.message import Message
 import json
 import aiogram_broadcaster
 from aiogram_broadcaster import message_broadcaster
-from data.config import partner_collection,links_collection,user_collection, staff_collection, settings_collection, pmessages_collection, photos_collection
+from data.config import language_collection, partner_collection,links_collection,user_collection, staff_collection, settings_collection, pmessages_collection, photos_collection
 from aiogram.types import InlineKeyboardMarkup, InlineKeyboardButton, ReplyKeyboardMarkup, KeyboardButton, message_id
 from loader import dp,bot
 from states import ProjectManage,SupportManage, SetupBTSstates
 from aiogram.dispatcher import FSMContext
-from utils.misc import build_support_menu, reverse_check,get_partner_obj, system_text_parser,issupport, isadmin, support_role_check, xstr, photoparser, parse_message_by_tag_name, get_user_came_from,   get_user_city, linkparser, linkparser_default
-from aiogram.types import InputMediaPhoto
-from keyboards.default import defaultmenu,operatorshowuser
-from keyboards.inline import usersupportchoiceinline, ticket_callback, add_operator_callback, show_support_pages, edit_something_admin, show_cities_pages
+from utils.misc import build_user_menu,get_text, build_support_menu, reverse_check,get_partner_obj, system_text_parser,issupport, isadmin, support_role_check, xstr, photoparser, parse_message_by_tag_name, get_user_came_from,   get_user_city, linkparser, linkparser_default
+from aiogram.types import InputMediaPhoto,KeyboardButton, ReplyKeyboardMarkup
+from keyboards.inline import meeting_pick_lang,usersupportchoiceinline, ticket_callback, add_operator_callback, show_support_pages, edit_something_admin, show_cities_pages
 
 
 @dp.message_handler(CommandStart())
@@ -41,11 +40,8 @@ async def bot_start(message: types.Message):
 
     else:
         if issupport(message.from_user.id) == True:
-            
             html_text,supportmenubase=build_support_menu(message.from_user.id)
-
             await message.answer_photo(photo=photoparser("operatormainmenu"), caption=html_text,parse_mode='HTML',reply_markup=supportmenubase )     
-           
             await SupportManage.menu.set()  
         else:
             if user_collection.count_documents({"user_id": message.from_user.id}) == 0 and message.from_user.is_bot==False:
@@ -73,51 +69,54 @@ async def bot_start(message: types.Message):
                 "came_from": deeplink,
                 "when_came": datetime.now(),
                 "user_photo":pdasasd,
-                "socialnet":socialnet
+                "socialnet":socialnet,
+                "lang_code":"none"
                 })
+
+
+                langs=photoo['langs']
+                lang_buttons = InlineKeyboardMarkup()
+                for x in langs:
+                    lang_buttons.add(InlineKeyboardButton(text=x['lang_name'], callback_data=meeting_pick_lang.new("mtnglang",param1=message.from_user.id,param2=x['lang_code'])))
+
                 html_text="\n".join(
                     [
-                        '<b>👋Здравствуйте',
-                        '💎 Спасибо, что обратились в «Крипто Консалтинг».</b>',
-                        'Здесь мы собрали для вас всю необходимую информацию о криптовалютах и о нашей компании.',
+                        'Choose your language:'
                     ]
                 )
-                inlinebutt = InlineKeyboardMarkup(row_width=1, inline_keyboard=[
-                    [InlineKeyboardButton(
-                        text='Хорошо, продолжить',
-                        callback_data='start_meeting_user'
-                    )],
-                ]) 
-                await bot.send_message(chat_id= message.from_user.id, text=html_text,parse_mode='HTML', reply_markup=inlinebutt)
-                await ProjectManage.startmeeting.set()
+                
+                await bot.send_message(chat_id= message.from_user.id, text=html_text,parse_mode='HTML', reply_markup=lang_buttons)
+                await ProjectManage.startmeeting_lang.set()
             elif message.from_user.is_bot==False:
-                html_text="\n".join(
-                    [
-                        system_text_parser('menu_system_text')
-                    ]
-                )         
-                thisuser=user_collection.find_one({'user_id':message.from_user.id})
-                userpartner=get_partner_obj(thisuser['citytag'])
-                
+                html_text,defaultmenu=build_user_menu(message.from_user.id)   
+                 
                 await ProjectManage.menu.set()
-                caption_attach="\n".join(
-                    [
-                        userpartner['datatext']['menu']      
-                    ]
-                )
                 await message.answer_photo(photo=photoparser('usermainmenu'), caption=html_text ,reply_markup=defaultmenu)
-                await message.answer_photo(photo=userpartner['menu_photo'], caption=caption_attach)
+
                 
-#################################################User Meet#############################################33                    
-@dp.callback_query_handler(text='start_meeting_user', state=ProjectManage.startmeeting)
-async def start_meeting_user_func(call:types.CallbackQuery):
+#################################################User Meet#############################################33   
+@dp.callback_query_handler(meeting_pick_lang.filter(command='mtnglang'), state=ProjectManage.startmeeting_lang)
+async def picked_lang_meeting(call: types.CallbackQuery, callback_data:dict):
+    param1 = callback_data.get("param1")
+    user_id=int(param1)
+    lang_code=callback_data.get("param2")
+
+    user_collection.find_and_modify(
+        query={"user_id":user_id},
+        update={"$set":{"lang_code":lang_code}}
+    )
+
     html_text="\n".join(
         [
-            'Напишите свое имя 😊'
+            get_text('user_meetwritename_defbutton_text', call.from_user.id)
         ]
     )
     await ProjectManage.getnameuser.set()
     await call.message.edit_text(text=html_text, parse_mode='HTML', reply_markup=None)
+
+
+
+
 
 ########################################################Все что ниже должно быть внизу########################################################
 
@@ -129,23 +128,10 @@ async def askcityuser_func(message: types.Message):
         query={"user_id":message.from_user.id},
         update={"$set":{"callmeas":message.text}}
     )
-
-    html_text="\n".join(
-        [
-            system_text_parser('menu_system_text')
-        ]
-    )  
-    thisuser=user_collection.find_one({'user_id':message.from_user.id})
-    userpartner=get_partner_obj(thisuser['citytag'])
-    await ProjectManage.menu.set()
-    caption_attach="\n".join(
-        [
-            userpartner['datatext']['menu']      
-        ]
-    )
+    html_text,defaultmenu=build_user_menu(message.from_user.id)   
     await ProjectManage.menu.set() 
     await message.answer_photo(photo=photoparser('usermainmenu'), caption=html_text ,reply_markup=defaultmenu)
-    await message.answer_photo(photo=userpartner['menu_photo'], caption=caption_attach)
+
 
 
 
@@ -176,18 +162,15 @@ async def menu_hand(message: types.Message, state: FSMContext):
         "came_from": deeplink,
         "when_came": datetime.now(),
         "user_photo":pdasasd,
-        "socialnet":socialnet
+        "socialnet":socialnet,
+        'lang_code':'none'
         })
-        html_text="\n".join(
-            [
-                '<b>👋Здравствуйте',
-                '💎 Спасибо, что обратились в «Крипто Консалтинг».</b>',
-                'Здесь мы собрали для вас всю необходимую информацию о криптовалютах и о нашей компании.',
-            ]
-        )
+
+        html_text=get_text('user_meetstart_defbutton_text', message.from_user.id)
+
         inlinebutt = InlineKeyboardMarkup(row_width=1, inline_keyboard=[
             [InlineKeyboardButton(
-                text='Хорошо, продолжить',
+                text=get_text('user_meetstart_inline_button_text', message.from_user.id),
                 callback_data='start_meeting_user'
             )],
         ]) 
@@ -197,34 +180,18 @@ async def menu_hand(message: types.Message, state: FSMContext):
         html_text,supportmenubase=build_support_menu(message.from_user.id)
         await state.reset_state()
         await SupportManage.menu.set()  
-        #await message.answer(text=html_text,parse_mode='HTML',reply_markup=supportmenubase )
         await message.answer_photo(photo=photoparser("operatormainmenu"), caption=html_text,parse_mode='HTML',reply_markup=supportmenubase )    
     else:    
-        thisuser=user_collection.find_one({'user_id':message.from_user.id})
-        html_text="\n".join(
-            [
-                system_text_parser('menu_system_text')
-            ]
-        )
+        html_text,defaultmenu=build_user_menu(message.from_user.id) 
         await state.reset_state()
         await ProjectManage.menu.set() 
-
-        userpartner=get_partner_obj(thisuser['citytag'])
-        await ProjectManage.menu.set()
-        caption_attach="\n".join(
-            [
-                userpartner['datatext']['menu']      
-            ]
-        )
         await message.answer_photo(photo=photoparser('usermainmenu'), caption=html_text ,reply_markup=defaultmenu)
-        await message.answer_photo(photo=userpartner['menu_photo'], caption=caption_attach)
 
 
 
 
 @dp.message_handler(content_types=['photo'], state=SupportManage.menu)
 async def parsephoto_hand(message: types.Message, state: FSMContext): 
-   
     await message.answer(text=message.photo[0].file_id)
     await bot.send_photo(chat_id=message.from_user.id, photo=message.photo[0].file_id, caption=message.caption)
 
@@ -249,6 +216,10 @@ async def parse_video_hand(message: types.Message, state: FSMContext):
     photosss=photos_collection.find({})
     for x in photosss:
         await bot.send_photo(chat_id=message.from_user.id, photo=x['photo_id'], caption=x['name']+' '+x['photo_id'])
+    settingsphotoss=settings_collection.find_one({'settings':'mainsettings'})
+    settingsphcollection=settingsphotoss['photos_profile']
+    for y in settingsphcollection:
+        await bot.send_photo(chat_id=message.from_user.id, photo=y, caption=y)
 
 @dp.message_handler(text='createtagg', state=SupportManage.menu)
 async def parse_video_hand(message: types.Message, state: FSMContext): 
@@ -269,23 +240,10 @@ async def support_menu_hand(message: types.Message, state: FSMContext):
         await SupportManage.menu.set()     
         await message.answer_photo(photo=photoparser("operatormainmenu"), caption=html_text,parse_mode='HTML',reply_markup=supportmenubase )   
     else:    
-        thisuser=user_collection.find_one({'user_id':message.from_user.id})
-        html_text="\n".join(
-            [
-                system_text_parser('menu_system_text')
-            ]
-        )
+        html_text,defaultmenu=build_user_menu(message.from_user.id) 
         await state.reset_state()
         await ProjectManage.menu.set() 
-
-        userpartner=get_partner_obj(thisuser['citytag'])
-        caption_attach="\n".join(
-            [
-                userpartner['datatext']['menu']      
-            ]
-        )
         await message.answer_photo(photo=photoparser('usermainmenu'), caption=html_text ,reply_markup=defaultmenu)
-        await message.answer_photo(photo=userpartner['menu_photo'], caption=caption_attach)
         
 @dp.message_handler(state=SetupBTSstates.getadmincode)
 async def blockbts(message: types.Message):

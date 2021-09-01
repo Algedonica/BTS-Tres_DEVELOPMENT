@@ -9,4 +9,8 @@ csv_tables_call = CallbackData("showcsvpages_factory","command","param1","param2
 knowledge_list_call= CallbackData("knowledge_list_factory","command","param1","param2")
 about_team_call= CallbackData("about_team_factory","command","param1","param2")
 
+show_ticket_pages=CallbackData("sw_tkt_pgs_fctr","command","page")
+
 show_broadcast_pages=CallbackData("brdcstfctr","command","param1","param2")
+
+meeting_pick_lang=CallbackData("lngpckfctr","command","param1","param2")

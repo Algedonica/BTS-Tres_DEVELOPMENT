@@ -8,7 +8,7 @@ import pymongo
 bot = Bot(token=config.BOT_TOKEN, parse_mode=types.ParseMode.HTML)
 
 
-storage = MongoStorage(uri=states_connect)
+storage = MongoStorage(uri=states_connect, db_name='tres_bts_FSM')
 
 
 

@@ -9,7 +9,7 @@ client = pymongo.MongoClient(str(os.getenv("db_connect")))
 
 states_connect=str(os.getenv("states_connect"))
 
-db = client.cryptocons_dev
+db = client.bts_tres_dev
 user_collection = db.users
 ticket_collection= db.tickets
 staff_collection=db.staff
@@ -24,7 +24,7 @@ videocircles_collection=db.videocircle
 partner_collection=db.partner
 links_collection=db.partnerlinks
 broadcast_collection=db.broadcast
-
+language_collection=db.langs
 inline_materials_collection=db.inline_materials
 
 settings_obj=settings_collection.find_one({"settings":"mainsettings"})

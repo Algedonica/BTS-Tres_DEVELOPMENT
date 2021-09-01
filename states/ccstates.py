@@ -9,8 +9,10 @@ class ProjectManage(StatesGroup):
     onair = State()
     getnameuser = State()
     startmeeting = State()
+    startmeeting_lang = State()
     getcityuser = State()
     addglblcity = State()
+    change_lang=State()
 class SupportManage(StatesGroup):
     menu = State()
     awaitingsup = State()
@@ -32,6 +34,8 @@ class SupportManage(StatesGroup):
 
     broadcast_post_edit_post=State()
     broadcast_post_edit_date=State()
+
+    change_lang=State()
 class SetupBTSstates(StatesGroup):
     getadmincode = State()
     catchadmincode = State()

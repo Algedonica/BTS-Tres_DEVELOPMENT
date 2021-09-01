@@ -1,8 +1,8 @@
 from pymongo import settings
-from data.config import partner_collection,staff_collection, ticket_collection, settings_collection, pmessages_collection, videos_collection, photos_collection, videocircles_collection, channelid, user_collection, links_collection
+from data.config import language_collection, partner_collection,staff_collection, ticket_collection, settings_collection, pmessages_collection, videos_collection, photos_collection, videocircles_collection, channelid, user_collection, links_collection
 from loader import dp, bot
 from datetime import datetime
-from aiogram.types import InlineKeyboardMarkup, InlineKeyboardButton
+from aiogram.types import InlineKeyboardMarkup, InlineKeyboardButton, user, KeyboardButton, ReplyKeyboardMarkup
 
 
 
@@ -51,15 +51,6 @@ def reverse_check(x):
             return True
     else:
         return True
-# def parse_city(x):
-#     asd=settings_collection.find_one({"settings":"mainsettings"})
-#     cities_obj=asd["current_cities"]
-#     gotcha=""
-#     for y in cities_obj:
-#         if x == y['code']:
-#             gotcha = y['city']
-#             break
-#     return gotcha
 
 
 def get_partner_channel(x):
@@ -85,10 +76,9 @@ def parse_message_by_tag_name(x):
 async def check_error_ticket(x):
     asd = ticket_collection.find_one({'ticketid':x})
     if asd==None:
-        
         return ''
     elif asd['isopen']=='created':
-        returning='Невозможно переключиться на обращение. Возможно клиент заблокировал бота.'
+        returning='Connection failed. Perhaps bot was banned from client side.'
         
         counttickets=ticket_collection.find().count()+1
 
@@ -106,17 +96,17 @@ async def check_error_ticket(x):
         clientnickname=clientnickname['username']
 
         if operatornickname=='none':
-            operatornickname='Без ника'
+            operatornickname='No nickname'
         else:
             operatornickname="@"+operatornickname
 
         if clientnickname=='none':
-            clientnickname='Без ника'
+            clientnickname='No nickname'
         else:
             clientnickname="@"+clientnickname
         datamessagehere = "\n".join(
             [
-                '<b>Обращение № '+str(counttickets)+'</b>',
+                '<b>Request № '+str(counttickets)+'</b>',
                 asd['title'],
                 '',
                 '🗣 '+clientnickname+' - '+clientcallmeas,
@@ -127,11 +117,11 @@ async def check_error_ticket(x):
                 '',
                 asd["messagedata"],
                 '',
-                '<b>‼️Ошибка, похоже клиент забанил бота‼️</b> <i>('+datetime.now().strftime("%d.%m.%Y / %H:%M")+')</i>',
+                '<b>‼️Error, perhaps bot was banned from client side‼️</b> <i>('+datetime.now().strftime("%d.%m.%Y / %H:%M")+')</i>',
                 '',
                 '=========================',
                 '',
-                "Диалог закрыт с ошибкой (клиент забанил бота) ",
+                "Request ended with error (bot was banned from client side)",
                 "<i>"+datetime.now().strftime("%d.%m.%Y / %H:%M")+"</i>"
 
             ]
@@ -141,14 +131,14 @@ async def check_error_ticket(x):
 
         return returning
     elif asd['isopen']=='paused':
-        returning='Невозможно переключиться на обращение. Возможно клиент заблокировал бота.'
+        returning='Connection failed. Perhaps bot was banned from client side.'
     
         counttickets=ticket_collection.find().count()+1
 
         if asd['operator']=='none':
             
-            operatorcallmeas='none'
-            operatornickname='none'
+            operatorcallmeas='No nickname'
+            operatornickname='No nickname'
         else:
             operatornickname=staff_collection.find_one({'user_id':asd['operator']})
             operatorcallmeas=operatornickname['callmeas']
@@ -159,17 +149,17 @@ async def check_error_ticket(x):
         clientnickname=clientnickname['username']
 
         if operatornickname=='none':
-            operatornickname='Без ника'
+            operatornickname='No nickname'
         else:
             operatornickname="@"+operatornickname
 
         if clientnickname=='none':
-            clientnickname='Без ника'
+            clientnickname='No nickname'
         else:
             clientnickname="@"+clientnickname
         datamessagehere = "\n".join(
             [
-                '<b>Обращение № '+str(counttickets)+'</b>',
+                '<b>Request № '+str(counttickets)+'</b>',
                 asd['title'],
                 '',
                 '🗣 '+clientnickname+' - '+clientcallmeas,
@@ -180,11 +170,11 @@ async def check_error_ticket(x):
                 '',
                 asd["messagedata"],
                 '',
-                '<b>‼️Ошибка, похоже клиент забанил бота‼️</b> <i>('+datetime.now().strftime("%d.%m.%Y / %H:%M")+')</i>',
+                '<b>‼️Error, perhaps bot was banned from client side‼️</b> <i>('+datetime.now().strftime("%d.%m.%Y / %H:%M")+')</i>',
                 '',
                 '=========================',
                 '',
-                "Диалог закрыт с ошибкой (клиент забанил бота) ",
+                "Request ended with error (bot was banned from client side)",
                 "<i>"+datetime.now().strftime("%d.%m.%Y / %H:%M")+"</i>"
 
             ]
@@ -194,12 +184,10 @@ async def check_error_ticket(x):
 
         return returning
     elif asd['isopen']=='onair':
-        returning='Невозможно переключиться на обращение. Другой оператор уже начал диалог.'
-        print('tut4')
+        returning='Connection failed. Another support took this request.'
         return returning
     else:
-        print('tut5')
-        returning='Невозможно переключиться на обращение. Неизвестная ошибка.'
+        returning='Connection failed. Unknown error.'
         return returning
 
 # -----------------media----parsers-----------------------
@@ -271,39 +259,86 @@ def get_partner_obj(x):
 def build_support_menu(x):
     html_text="\n".join(
         [
-            '👇 Следите за новыми запросами! 👇'
+            get_text(text_code='support_main_menu', user_id=x)
         ]
     )
     supportmenubase = InlineKeyboardMarkup(row_width=1, inline_keyboard=[
         [InlineKeyboardButton(
-            text='📄 Входящие запросы',
+            text=get_text(text_code='support_incoming_requests_button_text', user_id=x),
             callback_data='to_tickets'
         )],
-        [InlineKeyboardButton(
-            text='⚙️ Настройки (в разработке)',
-            callback_data='to_settings'
-        )]
     ]) 
     if isadmin(x)== True:
         supportmenubase.add(InlineKeyboardButton(
-        text='💎 Админпанель',
+        text=get_text(text_code='support_adminpanel_button_text', user_id=x),
         callback_data='to_admin_menu'
     ))
     if support_role_check(x)== "PLUS":
         supportmenubase.add(InlineKeyboardButton(
-            text='🗄 Отчеты',
+            text=get_text(text_code='support_report_button_text', user_id=x),
             callback_data='to_csv_tables'
         ))
         supportmenubase.add(InlineKeyboardButton(
-            text='💌 Рассылка',
+            text=get_text(text_code='support_broadcast_button_text', user_id=x),
             callback_data='to_broadcast_admin'
         ))
-
-
     return html_text, supportmenubase
 
 
+###############menu builders###################33
+def build_user_menu(x):
+    html_text="\n".join(
+        [
+            get_text(text_code='test_test', user_id=x)
+        ]
+    )
+    defaultmenu = ReplyKeyboardMarkup(
+        keyboard=[
+            [
+                KeyboardButton(text=get_text('user_mainmenu_defbutton_text', x))
+            ],
+            [
+                KeyboardButton(text='Simba Storage'),
+                KeyboardButton(text='Tres'),
+            ],
+            [
+                KeyboardButton(text='Foster'),
+                KeyboardButton(text='Schutz'),
+            
+            ]
+        ],
+        resize_keyboard=True
+    )
+    return html_text, defaultmenu
 
+
+def build_userendsupport(x):
+
+    userendsupport = ReplyKeyboardMarkup(
+        keyboard=[
+            [
+                KeyboardButton(text=get_text('user_сlose_dialogue_two_button_text', x)) 
+            ],
+        ],
+        resize_keyboard=True
+    )
+    return userendsupport
+
+
+def build_operatorcontrol(x):
+
+    operatorcontrol = ReplyKeyboardMarkup(
+        keyboard=[
+            [
+                KeyboardButton(text=get_text('user_end_dialogue_text', x)),
+                KeyboardButton(text=get_text('user_shift_out_from_button_text', x)),
+            ],
+        ],
+        resize_keyboard=True
+    )
+    return operatorcontrol
+
+###############menu builders###################33
 
 def group_valid_check(x):
     asd=[]
@@ -325,3 +360,10 @@ def group_valid_check(x):
     
 
 
+def get_text(text_code, user_id):
+    lang_obj=language_collection.find_one({'text_code':text_code})
+    thisuser=user_collection.find_one({'user_id':user_id})
+    user_lang=thisuser['lang_code']
+
+    finaltext=lang_obj[user_lang]
+    return finaltext

@@ -9,7 +9,7 @@ from aiogram import types
 from aiogram.dispatcher import FSMContext
 import secrets
 import math
-from utils.misc import issupport,build_support_menu,system_text_parser,get_partner_obj,isadmin,support_role_check, xstr, photoparser, parse_message_by_tag_name, getCryptoData, parse_video_by_tag_name, send_to_channel, get_user_city,   get_user_came_from, check_error_ticket
+from utils.misc import get_text, issupport,build_support_menu,system_text_parser,get_partner_obj,isadmin,support_role_check, xstr, photoparser, parse_message_by_tag_name, getCryptoData, parse_video_by_tag_name, send_to_channel, get_user_city,   get_user_came_from, check_error_ticket
 from keyboards.inline import show_broadcast_pages
 
 
@@ -24,7 +24,7 @@ async def broadcaster_go(thisuser, message_id, sendto, broadcast_id):
             finalarr.append(x['user_id'])
     finalarr.append(thisuser)
     await MessageBroadcaster(finalarr, finalmsg).run()
-    await bot.send_message(chat_id=thisuser,text='Рассылка успешно завершена')
+    await bot.send_message(chat_id=thisuser,text='Broadcast complete')
     broadcast_collection.find_one_and_update(
         { "broadcast_id":broadcast_id},
         { "$set":{"status":"finished"}}
@@ -40,29 +40,35 @@ async def broadcaster_startup():
         scheduler.add_job(broadcaster_go, 'date', id=broadcast_obj['broadcast_id'], run_date=datetime(int(datearr[2]), int(datearr[1]), int(datearr[0]), int(timearr[0]), int(timearr[1])), kwargs={'thisuser':broadcast_obj['user_id'], 'message_id':broadcast_obj['message_id'], 'sendto':broadcast_obj['partners'], 'broadcast_id':broadcast_obj['broadcast_id']})
     
 
-@dp.callback_query_handler(text='to_broadcast_admin',state=[SupportManage.menu])
+@dp.callback_query_handler(text='to_broadcast_admin',state=[SupportManage.menu,SupportManage.broadcast_init])
 async def broadcasta_init(call:types.CallbackQuery):
-
+    await SupportManage.menu.set()
     supportmenubase = InlineKeyboardMarkup(row_width=1, inline_keyboard=[
         [InlineKeyboardButton(
-            text='+ Добавить рассылку',
+            text=get_text('support_broadcast_add_new_button_text',call.from_user.id),
             callback_data='add_new_broadcast'
         )],
         [InlineKeyboardButton(
-            text='Посмотреть мои рассылки',
+            text=get_text('support_broadcast_show_all_button_text',call.from_user.id),
             callback_data='my_broadcasts'
         )]
     ]) 
 
-    supportmenubase.add(InlineKeyboardButton(text="↩️ в меню",callback_data='supportbacktomenu'))
-    await call.message.edit_caption(caption='Вы находитесь в меню управления рассылками', reply_markup=supportmenubase)
+    supportmenubase.add(InlineKeyboardButton(text=get_text('user_backtomenu_button_text',call.from_user.id),callback_data='supportbacktomenu'))
+    await call.message.edit_caption(caption=get_text('support_broadcasts_main_text',call.from_user.id), reply_markup=supportmenubase)
 
 
 
 
 @dp.callback_query_handler(text='add_new_broadcast',state=[SupportManage.menu])
 async def broadcasta_init(call:types.CallbackQuery):
-    await call.message.edit_caption(caption='Пришлите пост который хотите отослать', reply_markup=None)
+    supportmenubase = InlineKeyboardMarkup(row_width=1, inline_keyboard=[
+        [InlineKeyboardButton(
+            text=get_text('user_backtomenu_button_text',call.from_user.id), 
+            callback_data='to_broadcast_admin')
+        ],
+    ]) 
+    await call.message.edit_caption(caption=get_text('support_broadcast_adding_new_text',call.from_user.id), reply_markup=supportmenubase)
     await SupportManage.broadcast_init.set()
 
 
@@ -74,11 +80,11 @@ async def broadcasta_get_msg(message:types.Message, state:FSMContext):
     await MessageBroadcaster(message.from_user.id, message).run()
     supportmenubase = InlineKeyboardMarkup(row_width=1, inline_keyboard=[
         [InlineKeyboardButton(
-            text='Далее',
+            text=get_text('support_broadcast_pick_users_button_text',message.from_user.id), 
             callback_data=show_broadcast_pages.new("show_avaliable_partners",param1=1, param2='none')
         )]
     ]) 
-    await message.answer('Вы добавили пост. Не беспокойтесь, если заметили ошибку. После завершения вы сможете его отредактировать. Нажмите на "Далее".', reply_markup=supportmenubase)
+    await message.answer(get_text('support_broadcast_pick_users_text',message.from_user.id), reply_markup=supportmenubase)
     await SupportManage.broadcast_get.set()
     await state.update_data(thatmessage=msgtotext)
     await state.update_data(partnertosend=[])
@@ -133,9 +139,9 @@ async def broadcasta_go_showpartners(call:types.CallbackQuery,state:FSMContext, 
             callback_data=show_broadcast_pages.new("show_avaliable_partners",param1=nextpage, param2='none')
         )  
     inlinekeys.add(prevtoadd,nexttoadd)
-    inlinekeys.add(InlineKeyboardButton(text='Далее',callback_data='broadcast_to_time'))
+    inlinekeys.add(InlineKeyboardButton(text=get_text('support_broadcast_pick_partners_done_button_text',call.from_user.id),callback_data='broadcast_to_time'))  
     await call.message.delete()
-    await call.message.answer_photo(caption='Выберите группу пользователей. Вы на странице '+'<b>'+str(page)+'</b>',parse_mode='HTML',reply_markup=inlinekeys, photo=photoparser('operatormainmenu') )
+    await call.message.answer_photo(caption=get_text('support_broadcast_pick_partners_text',call.from_user.id),parse_mode='HTML',reply_markup=inlinekeys, photo=photoparser('operatormainmenu') )
 
 
 @dp.callback_query_handler(show_broadcast_pages.filter(command='aor'), state=SupportManage.broadcast_get)
@@ -194,9 +200,9 @@ async def broadcasta_go_showpartners_deleteoradd(call:types.CallbackQuery,state:
             callback_data=show_broadcast_pages.new("show_avaliable_partners",param1=nextpage, param2='none')
         )  
     inlinekeys.add(prevtoadd,nexttoadd)
-    inlinekeys.add(InlineKeyboardButton(text='Далее',callback_data='broadcast_to_time'))
+    inlinekeys.add(InlineKeyboardButton(text=get_text('support_broadcast_pick_partners_done_button_text',call.from_user.id),callback_data='broadcast_to_time'))
     await call.message.delete()
-    await call.message.answer_photo(caption='Вы на странице '+'<b>'+str(page)+'</b>',parse_mode='HTML',reply_markup=inlinekeys, photo=photoparser('operatormainmenu') )
+    await call.message.answer_photo(caption=get_text('support_broadcast_pick_partners_text',call.from_user.id),parse_mode='HTML',reply_markup=inlinekeys, photo=photoparser('operatormainmenu') )
     await state.update_data(partnertosend=partnertosend)
 
 
@@ -208,7 +214,7 @@ async def broadcasta_go_showpartners_deleteoradd(call:types.CallbackQuery,state:
 
 @dp.callback_query_handler(text='broadcast_to_time', state=SupportManage.broadcast_get)
 async def broadcasta_go_msgyes(call:types.CallbackQuery,state:FSMContext):
-    await call.message.edit_caption(caption='Теперь введите дату и время в формате "30-12-2000 в 16:45"', reply_markup=None)
+    await call.message.edit_caption(caption=get_text('support_broadcast_time_set_text',call.from_user.id), reply_markup=None)
     await SupportManage.broadcast_time.set()
 
 
@@ -216,7 +222,7 @@ async def broadcasta_go_msgyes(call:types.CallbackQuery,state:FSMContext):
 @dp.message_handler(state=[SupportManage.broadcast_time])
 async def broadcasta_time(message:types.Message,state:FSMContext):
     thistext=message.text
-    thistext=thistext.split(' в ')
+    thistext=thistext.split(' in ')
 
     datearr=thistext[0].split('-')
     timearr=thistext[1].split(':')
@@ -237,14 +243,11 @@ async def broadcasta_time(message:types.Message,state:FSMContext):
         "partners":partnertosend,
         "status": "active"
         })
-    html_text="\n".join(
-        [
-            '<b>Вы создали пост. Нажмите на кнопку ниже.</b>', 
-        ]
-    )
+    html_text= get_text('support_broadcast_done_create_text',message.from_user.id), 
+        
     broadcastcontrol = InlineKeyboardMarkup(row_width=1, inline_keyboard=[
         [InlineKeyboardButton(
-            text='Готово',
+            text=get_text('done_text',message.from_user.id),
             callback_data=show_broadcast_pages.new("sb_ob",param1=broadcast_id, param2='none')
         )],
     ])
@@ -263,23 +266,23 @@ async def show_my_broadcasts(call:types.CallbackQuery):
 
     supportmenubase = InlineKeyboardMarkup(row_width=1, inline_keyboard=[
         [InlineKeyboardButton(
-            text='Активные расслыки',
+            text=get_text('support_broadcasts_active_br_button_text',call.from_user.id),
             callback_data=show_broadcast_pages.new("show_list_broadcasts",param1=1, param2='active')
         )],
         [InlineKeyboardButton(
-            text='Завершенные/остановленные рассылки',
+            text=get_text('support_broadcasts_finished_br_button_text',call.from_user.id),
             callback_data=show_broadcast_pages.new("show_list_broadcasts",param1=1, param2='finished')
         )]
     ]) 
 
-    supportmenubase.add(InlineKeyboardButton(text="↩️ назад",callback_data='to_broadcast_admin'))
-    await call.message.edit_caption(caption='Выберите категорию рассылок', reply_markup=supportmenubase)
+    supportmenubase.add(InlineKeyboardButton(text=get_text('back_button_text',call.from_user.id),callback_data='to_broadcast_admin'))
+    await call.message.edit_caption(caption=get_text('support_broadcasts_category_text',call.from_user.id), reply_markup=supportmenubase)
 
 
 @dp.callback_query_handler(show_broadcast_pages.filter(command='show_list_broadcasts'),state=[SupportManage.menu])
 async def show_my_active_broadcasts(call:types.CallbackQuery, callback_data:dict):  
     broadcast_type = callback_data.get("param2")
-
+    await call.answer(cache_time=0)
 
     page = callback_data.get("param1")
     page = int(page)
@@ -296,28 +299,28 @@ async def show_my_active_broadcasts(call:types.CallbackQuery, callback_data:dict
     if prevpage < 1:
         prevtoadd=InlineKeyboardButton(
             text='◀️',
-            callback_data=show_broadcast_pages.new("show_active_broadcasts",param1=1, param2=broadcast_type)
+            callback_data=show_broadcast_pages.new("show_list_broadcasts",param1=1, param2=broadcast_type)
         )
     else:
         prevtoadd=InlineKeyboardButton(
             text='◀️',
-            callback_data=show_broadcast_pages.new("show_active_broadcasts",param1=prevpage, param2=broadcast_type)
+            callback_data=show_broadcast_pages.new("show_list_broadcasts",param1=prevpage, param2=broadcast_type)
         )
 
     if math.ceil(broadcasts_arr.count()/5)==page:
         nexttoadd=InlineKeyboardButton(
             text='▶️',
-            callback_data=show_broadcast_pages.new("show_active_broadcasts",param1=page, param2=broadcast_type)
+            callback_data=show_broadcast_pages.new("show_list_broadcasts",param1=page, param2=broadcast_type)
         )      
     else:
         nexttoadd=InlineKeyboardButton(
             text='▶️',
-            callback_data=show_broadcast_pages.new("show_active_broadcasts",param1=nextpage, param2=broadcast_type)
+            callback_data=show_broadcast_pages.new("show_list_broadcasts",param1=nextpage, param2=broadcast_type)
         )  
 
     inlinekeys.add(prevtoadd,nexttoadd)
-    inlinekeys.add(InlineKeyboardButton(text='↩️ назад',callback_data='my_broadcasts'))
-    await call.message.edit_caption(caption='Вы находитесь в разделе управления запланнированными активными рассылками', reply_markup=inlinekeys)
+    inlinekeys.add(InlineKeyboardButton(text=get_text('back_button_text',call.from_user.id),callback_data='my_broadcasts'))
+    await call.message.edit_caption(caption=get_text('support_broadcasts_manageactive_text',call.from_user.id), reply_markup=inlinekeys)
 
 # Редактирование поста---------------------------------------------------
 
@@ -331,36 +334,38 @@ async def broadcast_object_control(call:types.CallbackQuery, callback_data:dict)
 
     broadcastcontrol = InlineKeyboardMarkup(row_width=1, inline_keyboard=[
         [InlineKeyboardButton(
-            text='Отредактировать пост',
+            text=get_text('support_broadcasts_edit_post_button_text',call.from_user.id),
             callback_data=show_broadcast_pages.new("ch_br_p",param1=broadcast_obj['broadcast_id'], param2='none')
         )],
         [InlineKeyboardButton(
-            text='Сменить дату рассылки',
+            text=get_text('support_broadcasts_change_date_button_text',call.from_user.id),
             callback_data=show_broadcast_pages.new("ch_br_dt",param1=broadcast_obj['broadcast_id'], param2='none')
         )],
     ])
 
     if broadcast_obj['status']=='active':
         broadcastcontrol.add(InlineKeyboardButton(
-            text='Остановить',
+            text=get_text('support_broadcasts_stop_button_text',call.from_user.id),
             callback_data=show_broadcast_pages.new("ch_br_stat",param1=broadcast_obj['broadcast_id'], param2='finished')
         ))
     elif broadcast_obj['status']=='finished':
         broadcastcontrol.add(InlineKeyboardButton(
-            text='Запустить',
+            text= get_text('support_broadcasts_start_button_text',call.from_user.id),
             callback_data=show_broadcast_pages.new("ch_br_stat",param1=broadcast_obj['broadcast_id'], param2='active')
         ))
 
     broadcastcontrol.add(InlineKeyboardButton(
-            text='↩️ назад',
+            text=get_text('back_button_text',call.from_user.id),
             callback_data=show_broadcast_pages.new("show_list_broadcasts",param1=1, param2=broadcast_obj['status'])
         ))
     
     html_text="\n".join(
         [
-            '<b>ID рассылки: </b>'+broadcast_obj['broadcast_id'],
-            '<b>Статус: </b>'+broadcast_obj['status'],
-            '<b>Запланировано на: </b>'+broadcast_obj['run_date']
+            '<b>ID: </b>'+broadcast_obj['broadcast_id'],
+            '',
+            get_text('support_broadcasts_user_groups_text',call.from_user.id)+broadcast_obj['partners'],
+            get_text('support_broadcasts_send_date_text',call.from_user.id)+broadcast_obj['run_date'],
+            '<b>Запланировано на: </b>'+broadcast_obj['status']
         ]
     )
     await bot.send_photo(chat_id=call.from_user.id, photo=photoparser('usermainmenu'), caption= html_text,reply_markup=broadcastcontrol)

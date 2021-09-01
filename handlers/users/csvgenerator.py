@@ -51,7 +51,6 @@ async def show_menu_tables_csv(call:types.CallbackQuery, state: FSMContext):
             callback_data='supportbacktomenu'
         )]
     ])
-    # await call.message.edit_text(text=html_text, reply_markup=supportmenubase)
     await call.message.edit_media(media=InputMediaPhoto(media=photoparser('gettablecsv'), caption=html_text), reply_markup=supportmenubase)
 
 @dp.callback_query_handler(csv_tables_call.filter(command='init_csv_filtered'), state=[SupportManage.menu,SupportManage.initcsv])
@@ -410,56 +409,3 @@ async def user_tables_csv(call:types.CallbackQuery, state: FSMContext):
     pathfinal = os.path.join(pathname, currentdate)
     await bot.send_document(chat_id=call.from_user.id, document=InputFile(pathfinal))
     os.remove(pathfinal)
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-    # for user in avaiableusers:
-
-
-
-
-
-
-
-
-
-
-# @dp.callback_query_handler(text='init_csv_filtered', state=SupportManage.menu)
-# async def show_filtered_tables_csv(call:types.CallbackQuery):
-#     html_text="\n".join(
-#         [
-#             'Начинаем',
-#             'Пожалуйста, выберите ниже операторов, по которым нужна выгрузка'
-#         ]
-#     )
-#     supportmenubase = InlineKeyboardMarkup()
-#     supportmenubase.add(InlineKeyboardButton(
-#         text='Назад к меню выгрузки',
-#         callback_data='to_csv_tables'
-#     ))
-#     thisoperator=staff_collection.find_one({"user_id":call.from_user.id})
-
-#     opers=staff_collection.find({"staffrole":"support", "city_code": {"$in": thisoperator['city_code'][1:]}})
-
-#     for x in opers:
-#         print(x["user_id"])
-#     await call.message.edit_text(text=html_text, reply_markup=supportmenubase)   
-
-
-
-# # galka=""
-#         deleteoradd="1"
-#         if i['code'] in cities:
-#             galka="✔️"
-#             deleteoradd="0"
