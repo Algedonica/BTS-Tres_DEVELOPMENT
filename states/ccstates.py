@@ -4,6 +4,7 @@ from aiogram.dispatcher.filters.state import StatesGroup,State
 class ProjectManage(StatesGroup):
     menu = State()
     awaitingsup = State()
+    askproject=State()
     initializingsup = State()
     preparingquest = State()
     onair = State()
@@ -34,6 +35,7 @@ class SupportManage(StatesGroup):
 
     broadcast_post_edit_post=State()
     broadcast_post_edit_date=State()
+    broadcast_post_edit_tags=State()
 
     change_lang=State()
 class SetupBTSstates(StatesGroup):

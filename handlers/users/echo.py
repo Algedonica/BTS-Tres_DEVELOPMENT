@@ -1,3 +1,4 @@
+from os import fsdecode
 from re import split
 import secrets
 import math
@@ -41,35 +42,77 @@ scheduler.add_job(clearnotified, 'interval', seconds=180)
 
 #---------------------------about-----us-----end-----------------------------
 
-
 @dp.message_handler(state=ProjectManage.menu, text=['🗣 Получить консультацию', '🗣 Consultation'])
-async def initialize_ticket(message: types.Message):
+async def initialize_ticket_choose(message: types.Message, state:FSMContext):
     html_text="\n".join(
         [
-            get_text('user_getconsult_text', message.from_user.id)
+            get_text('user_choose_project', message.from_user.id)
         ]
     )
     backbutton=InlineKeyboardMarkup(row_width=1, inline_keyboard=[
+        [
+            InlineKeyboardButton(
+                text='Simba Storage',
+                callback_data=show_ticket_pages.new("projpck",page='Simba') 
+            ),
+            InlineKeyboardButton(
+                text='Tres',
+                callback_data=show_ticket_pages.new("projpck",page='Tres') 
+            )
+        ],
+        [
+            InlineKeyboardButton(
+                text='Foster',
+                callback_data=show_ticket_pages.new("projpck",page='Foster') 
+            ),
+            InlineKeyboardButton(
+                text='Schutz',
+                callback_data=show_ticket_pages.new("projpck",page='Schutz') 
+            )
+        ],
+
         [InlineKeyboardButton(
             text=get_text('user_backtomenu_button_text', message.from_user.id),
             callback_data='userbacktomenu'
         )]
     ])
+
     await message.answer(text='_',parse_mode='HTML', reply_markup=ReplyKeyboardRemove())
     await bot.delete_message(chat_id=message.from_user.id, message_id=message.message_id+1)
     await bot.send_message(chat_id=message.from_user.id,text=html_text,parse_mode='HTML', reply_markup=backbutton)
+    await ProjectManage.askproject.set()
+
+
+
+@dp.callback_query_handler(show_ticket_pages.filter(command='projpck'),state=ProjectManage.askproject) 
+async def initialize_ticket(call: types.CallbackQuery,callback_data:dict,state:FSMContext):
+    await state.update_data(project=callback_data.get("page"))
+    html_text="\n".join(
+        [
+            get_text('user_getconsult_text', call.from_user.id)
+        ]
+    )
+    backbutton=InlineKeyboardMarkup(row_width=1, inline_keyboard=[
+        [InlineKeyboardButton(
+            text=get_text('user_backtomenu_button_text', call.from_user.id),
+            callback_data='userbacktomenu'
+        )]
+    ])
+    
+    await call.message.edit_text(text=html_text,reply_markup=backbutton)
     await ProjectManage.initializingsup.set()
 
 @dp.message_handler(state=ProjectManage.initializingsup)
-async def initializing_support (message: types.Message):
-
+async def initializing_support (message: types.Message, state:FSMContext):
+    data = await state.get_data()
+    project = data.get("project")
     user=user_collection.find_one({"user_id": message.from_user.id})
 
     ticketid=user['citytag']+'-'+secrets.token_hex(4)+'-'+"{:03d}".format(secrets.randbelow(999))
 
     extradd={
         "side":"fromuser" ,
-        "date": datetime.now(), 
+        "date": datetime.now(),
         "text":'<b>❓ Request: </b>'+message.text,
         "from_id":message.from_user.id,
         "message_from_id":message.message_id,
@@ -81,6 +124,7 @@ async def initializing_support (message: types.Message):
     if ticket_collection.count_documents({"ticketid": ticketid}) == 0 and message.from_user.is_bot==False:
         ticket_collection.insert_one(
         {"ticketid": ticketid,
+        "project": project,
         "date": datetime.now(),
         "isopen": "created",
         "operator": "none",
@@ -116,10 +160,11 @@ async def initializing_support (message: types.Message):
 
 
 
-@dp.callback_query_handler(text='userbacktomenu', state=[ProjectManage.preparingquest,ProjectManage.initializingsup,ProjectManage.menu])
-async def user_come_to_menu(call:types.CallbackQuery):
-    html_text,defaultmenu=build_user_menu(message.from_user.id)   
+@dp.callback_query_handler(text='userbacktomenu', state=[ProjectManage.preparingquest,ProjectManage.initializingsup,ProjectManage.menu, ProjectManage.askproject])
+async def user_come_to_menu(call:types.CallbackQuery, state:FSMContext):
+    html_text,defaultmenu=build_user_menu(call.from_user.id)   
     await call.message.delete()
+    await state.reset_state()
     await ProjectManage.menu.set()
     await call.message.answer_photo(photo=photoparser('usermainmenu'), caption=html_text ,reply_markup=defaultmenu)
 
@@ -162,7 +207,7 @@ async def end_support(message: types.Message):
 
         datamessagehere = "\n".join(
             [
-                '<b>№'+str(counttickets)+' '+thisicket['citytag']+'</b>',
+                '<b>№'+str(counttickets)+' '+thisicket['citytag']+' '+'#'+thisicket['project']+'</b>',
                 '<b>'+thisicket['title']+'</b>',
                 '🗣 '+clientnickname+' - '+clientcallmeas,
                 '<i>'+thisicket['date'].strftime("%d.%m.%Y / %H:%M")+'</i>',
@@ -283,7 +328,7 @@ async def end_supportbysupport_error(call: CallbackQuery):
         datamessagehere = "\n".join(
             [
 
-                '<b>№'+str(counttickets)+' '+thisicket['citytag']+'</b>',
+                '<b>№'+str(counttickets)+' '+thisicket['citytag']+' '+'#'+thisicket['project']+'</b>',
                 '<b>'+thisicket['title']+'</b>',
                 '🗣 '+clientnickname+' - '+clientcallmeas,
                 '<i>'+thisicket['date'].strftime("%d.%m.%Y / %H:%M")+'</i>',
@@ -369,7 +414,7 @@ async def end_supportbysupport(message: types.Message):
 
         datamessagehere = "\n".join(
             [
-                '<b>№'+str(counttickets)+' '+thisicket['citytag']+'</b>',
+                '<b>№'+str(counttickets)+' '+thisicket['citytag']+' '+'#'+thisicket['project']+'</b>',
                 '<b>'+thisicket['title']+'</b>',
                 '🗣 '+clientnickname+' - '+clientcallmeas,
                 '<i>'+thisicket['date'].strftime("%d.%m.%Y / %H:%M")+'</i>',

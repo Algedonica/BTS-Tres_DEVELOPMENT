@@ -364,6 +364,15 @@ def get_text(text_code, user_id):
     lang_obj=language_collection.find_one({'text_code':text_code})
     thisuser=user_collection.find_one({'user_id':user_id})
     user_lang=thisuser['lang_code']
+    finaltext=lang_obj[user_lang]
+    return finaltext
+
+
+def broadcast_parse_activity(status, user_id):
+
+    thisuser=user_collection.find_one({'user_id':user_id})
+    user_lang=thisuser['lang_code']
+    lang_obj=language_collection.find_one({'text_code':'support_broadcasts_status_'+status+'_text'})
 
     finaltext=lang_obj[user_lang]
     return finaltext

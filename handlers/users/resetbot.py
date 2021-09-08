@@ -54,7 +54,7 @@ async def resetbot_byuser(message: types.Message):
 
         datamessagehere = "\n".join(
             [
-                '<b>№'+str(counttickets)+' '+thisicket['citytag']+'</b>',
+                '<b>№'+str(counttickets)+' '+thisicket['citytag']+' '+'#'+thisicket['project']+'</b>',
                 '<b>'+thisicket['title']+'</b>',
                 '🗣 '+clientnickname+' - '+clientcallmeas,
                 '<i>'+thisicket['date'].strftime("%d.%m.%Y / %H:%M")+'</i>',
@@ -159,7 +159,7 @@ async def resetbot_byoperator(message: types.Message, state: FSMContext):
 
         datamessagehere = "\n".join(
             [
-                '<b>№'+str(counttickets)+' '+thisicket['citytag']+'</b>',
+                '<b>№'+str(counttickets)+' '+thisicket['citytag']+' '+'#'+thisicket['project']+'</b>',
                 '<b>'+thisicket['title']+'</b>',
                 '🗣 '+clientnickname+' - '+clientcallmeas,
                 '<i>'+thisicket['date'].strftime("%d.%m.%Y / %H:%M")+'</i>',

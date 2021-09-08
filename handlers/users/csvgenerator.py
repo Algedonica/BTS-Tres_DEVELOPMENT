@@ -1,8 +1,3 @@
-# Показать
-# 1. тикет(ы) + оператор(ы) + дата + тэг
-# 2. пользователи
-# 3. тикеты + тэг
-
 import math
 import csv
 
@@ -10,7 +5,7 @@ from datetime import datetime, timezone
 from aiogram import types
 from aiogram.types import InputFile, ReplyKeyboardRemove
 from loader import dp, bot
-from data.config import user_collection, ticket_collection, staff_collection, settings_collection
+from data.config import user_collection, ticket_collection, staff_collection, partner_collection
 from states import ProjectManage,SupportManage
 from aiogram.types import CallbackQuery,ReplyKeyboardRemove
 from aiogram.utils.callback_data import CallbackData
@@ -18,7 +13,7 @@ from aiogram.types import InlineKeyboardMarkup, InlineKeyboardButton
 from aiogram.dispatcher.filters import Command
 from aiogram.dispatcher import FSMContext
 from aiogram.types import InputMediaPhoto
-from utils.misc import isadmin,support_role_check, photoparser
+from utils.misc import get_text,isadmin,support_role_check, photoparser
 
 from keyboards.inline import csv_tables_call
 
@@ -26,34 +21,29 @@ import sys,os
 pathname = os.path.dirname(sys.argv[0]) 
 
 
-@dp.callback_query_handler(text='to_csv_tables', state=[SupportManage.menu,SupportManage.initcsv])
+@dp.callback_query_handler(text='to_csv_tables', state=[SupportManage.menu,SupportManage.initcsv,SupportManage.accept_time,SupportManage.inittimecsv])
 async def show_menu_tables_csv(call:types.CallbackQuery, state: FSMContext):
     await call.answer(cache_time=0)
     await state.reset_state()
     await SupportManage.menu.set()
-    html_text="\n".join(
-        [
-            'Какую таблицу вы хотите скачать?',
-            'В фильтре обращений вы можете произвести фильтрацию всех данных по нужным параметрам'
-        ]
-    )
+    html_text=get_text('support_csv_menu',call.from_user.id)
     supportmenubase = InlineKeyboardMarkup(row_width=1, inline_keyboard=[
         [InlineKeyboardButton(
-            text='📄 Фильтр обращений',
+            text=get_text('support_csv_request_table',call.from_user.id),
             callback_data=csv_tables_call.new('init_csv_filtered',param1=1, param2="none")
         )],
         [InlineKeyboardButton(
-            text='👥 Список клиентов',
+            text=get_text('support_csv_client_table',call.from_user.id),
             callback_data='init_csv_users'
         )],
         [InlineKeyboardButton(
-            text='↩️ Назад',
+            text=get_text('back_button_text',call.from_user.id),  
             callback_data='supportbacktomenu'
         )]
     ])
     await call.message.edit_media(media=InputMediaPhoto(media=photoparser('gettablecsv'), caption=html_text), reply_markup=supportmenubase)
 
-@dp.callback_query_handler(csv_tables_call.filter(command='init_csv_filtered'), state=[SupportManage.menu,SupportManage.initcsv])
+@dp.callback_query_handler(csv_tables_call.filter(command='init_csv_filtered'), state=[SupportManage.menu,SupportManage.initcsv,SupportManage.inittimecsv])
 async def show_filtered_tables_csv_func(call: types.CallbackQuery, callback_data:dict, state: FSMContext):
     await call.answer(cache_time=0)
     page = callback_data.get("param1")
@@ -63,7 +53,7 @@ async def show_filtered_tables_csv_func(call: types.CallbackQuery, callback_data
     inlinekeys = InlineKeyboardMarkup(row_width=2)
     thisoperator=staff_collection.find_one({"user_id":call.from_user.id})
     thisoperator_cities=thisoperator['city_code'][1:]
-    opers=staff_collection.find({"staffrole":"support", "city_code": {"$in": thisoperator_cities}}).skip((page-1)*5).limit(5)
+    opers=staff_collection.find({"staffrole":{"$in":["support","admin","owner"]}, "city_code": {"$in": thisoperator_cities}}).skip((page-1)*5).limit(5)
     data = await state.get_data()
     opersarray = data.get("opers")
     
@@ -116,15 +106,14 @@ async def show_filtered_tables_csv_func(call: types.CallbackQuery, callback_data
     )
     inlinekeys.add(prevtoadd,nexttoadd)
     inlinekeys.add(InlineKeyboardButton(
-        text='🌆 Выбрать город',
+        text=get_text('support_csv_pick_partner',call.from_user.id),  
         callback_data=csv_tables_call.new('to_csv_cities',param1=1, param2="none")
     ))
     inlinekeys.add(InlineKeyboardButton(
-        text='↩️ Назад',
+        text=get_text('back_button_text',call.from_user.id),  
         callback_data='to_csv_tables'
     ))
     await SupportManage.initcsv.set()
-    # await call.message.edit_text(text=html_text, reply_markup=inlinekeys) 
     await call.message.edit_media(media=InputMediaPhoto(media=photoparser('chooseoperatorcsv'), caption=html_text), reply_markup=inlinekeys)
 
 
@@ -139,20 +128,13 @@ async def show_table_cities_csv_func(call: types.CallbackQuery, callback_data:di
     inlinekeys = InlineKeyboardMarkup(row_width=2)
     thisoperator=staff_collection.find_one({"user_id":call.from_user.id})
     thisoperator_cities=thisoperator['city_code'][1:]
-    avaliablecitiesarr=settings_collection.find_one({"settings":"mainsettings"})
-    cities_obj=avaliablecitiesarr["current_cities"]
+    cities_obj=partner_collection.find({'system_tag':{'$in': thisoperator_cities}}).skip((page-1)*5).limit(5)
     
+    cities_obj_len = cities_obj.count()
 
-    for asd in cities_obj[:]:
-        if asd['code'] not in thisoperator_cities:
-            cities_obj.remove(asd)
-        
-    cities_obj_len = len(cities_obj)
-    cities_obj=cities_obj[((page-1)*5):(5*page)]
-    print(cities_obj)
     data = await state.get_data()
     citiesarray = data.get("cities")
-    
+
     if citiesarray == None:
         citiesarray=[] 
 
@@ -166,12 +148,10 @@ async def show_table_cities_csv_func(call: types.CallbackQuery, callback_data:di
         await state.update_data(cities=citiesarray)
     for x in cities_obj:
         galka=""
-        if x["code"] in citiesarray:
+        if x["system_tag"] in citiesarray:
             galka="✔️"
-        inlinekeys.add(InlineKeyboardButton(text=galka+x["code"]+' - '+x["city"], callback_data=csv_tables_call.new('to_csv_cities',param1=page, param2=x["code"])))
+        inlinekeys.add(InlineKeyboardButton(text=galka+x["system_tag"]+' - '+x["city_name"], callback_data=csv_tables_call.new('to_csv_cities',param1=page, param2=x["system_tag"])))
 
-    
-   
     data = await state.get_data()
     citiesarray = data.get("cities")
     if prevpage < 1:
@@ -195,11 +175,6 @@ async def show_table_cities_csv_func(call: types.CallbackQuery, callback_data:di
             text='▶️',
             callback_data=csv_tables_call.new('to_csv_cities',param1=nextpage, param2="none")
         ) 
-    print(len(cities_obj))    
-    print(math.ceil(len(cities_obj)/5))
-    print(page)
-    print(nextpage)
-    print(prevpage)
     html_text="\n".join(
         [
             ' '
@@ -207,15 +182,14 @@ async def show_table_cities_csv_func(call: types.CallbackQuery, callback_data:di
     )
     inlinekeys.add(prevtoadd,nexttoadd)
     inlinekeys.add(InlineKeyboardButton(
-        text='🕟 Указать период',
+        text=get_text('support_csv_pick_date',call.from_user.id),
         callback_data=csv_tables_call.new('to_csv_time',param1=1, param2="none")
     ))
     inlinekeys.add(InlineKeyboardButton(
-        text='↩️ Назад',
-        callback_data=csv_tables_call.new('init_csv_filtered',param1=1, param2="none")
+        text=get_text('back_button_text',call.from_user.id),  
+        callback_data='to_csv_tables'
     ))
     await SupportManage.inittimecsv.set()
-    # await call.message.edit_text(text=html_text, reply_markup=inlinekeys)
     await call.message.edit_media(media=InputMediaPhoto(media=photoparser('choosecitycsv'), caption=html_text), reply_markup=inlinekeys)
 
 @dp.callback_query_handler(csv_tables_call.filter(command='to_csv_time'), state=[SupportManage.accept_time, SupportManage.inittimecsv])
@@ -228,18 +202,17 @@ async def show_table_time_csv_func(call: types.CallbackQuery, callback_data:dict
     )
     inlinekeys = InlineKeyboardMarkup(row_width=2)
     inlinekeys.add(InlineKeyboardButton(
-        text='↩️ Назад',
-        callback_data=csv_tables_call.new('init_csv_filtered',param1=1, param2="none")
+        text=get_text('back_button_text',call.from_user.id),  
+        callback_data='to_csv_tables'
     ))
     await SupportManage.accept_time.set()
-    # await call.message.edit_text(text=html_text, reply_markup=inlinekeys)
     await call.message.edit_media(media=InputMediaPhoto(media=photoparser('choosetimecsv'), caption=html_text), reply_markup=inlinekeys)
 
 @dp.message_handler(state=SupportManage.accept_time)
 async def accept_time_csv_func(message: types.Message, state: FSMContext):
     thismsg=message.text
     thismsg = thismsg.split(' - ')
-    months=['января', 'февраля', 'марта', 'апреля', 'мая', 'июня', 'июля', 'августа', 'сентября', 'октября', 'ноября', 'декабря']
+    months=['january', 'february', 'march', 'april', 'may', 'june', 'july', 'august', 'september', 'october', 'november', 'december']
     # try:
     timefrom = thismsg[0]
     timefrom = timefrom.split(' ')
@@ -263,7 +236,7 @@ async def accept_time_csv_func(message: types.Message, state: FSMContext):
 
         tickets_found=ticket_collection.find({"operator": {"$in": opers}, "citytag": {"$in": cities}, "date": { "$gte": timefrom, "$lte":timeto }})
 
-        await message.answer(text="Идет генерация файла",reply_markup=None)
+        await message.answer(text=get_text('support_csv_generating_file',message.from_user.id),reply_markup=None)
         currentdate = datetime.utcnow().strftime("%d.%m.%Y-%I.%M%p")+'_tickets_by_opers_cities_time.csv'
 
         with open(currentdate, 'w', encoding='utf8',newline='') as f:
@@ -271,6 +244,7 @@ async def accept_time_csv_func(message: types.Message, state: FSMContext):
             writer.writerow([
                 'Ticket ID',
                 'Created', 
+                'Project',
                 'Question', 
                 'Ticket status', 
                 'Client_username',
@@ -283,8 +257,7 @@ async def accept_time_csv_func(message: types.Message, state: FSMContext):
                 'Operator_username', 
                 'Operator_name', 
                 'Operator_callmeas',
-                'chat', 
-                'chat_timed'])  
+                'Message_data',])  
             for x in tickets_found:
                 thisuser = user_collection.find_one({"user_id":x["userid"]})
                 thisoperator = staff_collection.find_one({"user_id":x["operator"]})
@@ -293,22 +266,11 @@ async def accept_time_csv_func(message: types.Message, state: FSMContext):
                 thisusercamewhen = thisuser['when_came'].strftime("%d/%m/%Y %I:%M%p")
 
                 ticketstatus=x['isopen']
-                if ticketstatus == "onair":
-                    ticketstatus = "В процессе"
-                elif ticketstatus == "onpause":
-                    ticketstatus = "Приостановлен"
-                elif ticketstatus == "created":
-                    ticketstatus = "Создан"
-                elif ticketstatus == "closedbyclient":
-                    ticketstatus = "Завершен клиентом"
-                elif ticketstatus == "closedbyoperator":
-                    ticketstatus = "Завершен оператором"
-
-
 
                 writer.writerow([
                     x['ticketid'], 
                     ticketcreatedat, 
+                    x['project'],
                     x['title'], 
                     ticketstatus, 
                     thisuser['username'], 
@@ -322,30 +284,22 @@ async def accept_time_csv_func(message: types.Message, state: FSMContext):
                     thisoperator['first_name']+' '+thisoperator['last_name'],
                     thisoperator['callmeas'],
                     x['messagedata'],
-                    x['messagedata_timed']
                     ])
         pathfinal = os.path.join(pathname, currentdate)
         await bot.send_document(chat_id=message.from_user.id, document=InputFile(pathfinal))
         os.remove(pathfinal)
         await state.reset_state()
         await SupportManage.menu.set()
-        html_text="\n".join(
-            [
-                '<b>Таблица сформирована.</b>',
-                '<i>Если при открытии будет отображаться нечитаемый текст (кодировка), то рекомендуем импортировать таблицу в Google Docs.</i>'
-            ]
-        )
+        html_text=get_text('support_csv_request_table_done',message.from_user.id)
         inlinekeys= InlineKeyboardMarkup(row_width=1, inline_keyboard=[
             [InlineKeyboardButton(
-                text='↩️ Назад',
+                text=get_text('back_button_text',message.from_user.id),  
                 callback_data='supportbacktomenu'
             )]
         ])
-        # await message.answer(text=html_text, reply_markup=inlinekeys)
         await message.answer_photo(photo=photoparser('donecsv'), caption=html_text, reply_markup=inlinekeys)
-        # await call.message.edit_media(media=InputMediaPhoto(media=photoparser('choosetimecsv'), caption=html_text), reply_markup=inlinekeys)
     except:
-        await message.answer(text="Вы ввели промежуток неверно")
+        await message.answer(text=get_text('support_csv_request_table_error',message.from_user.id))
 
 
 
@@ -356,7 +310,7 @@ async def user_tables_csv(call:types.CallbackQuery, state: FSMContext):
     thisoperator_cities=thisoperator['city_code'][1:]
     avaiableusers=user_collection.find({'citytag':{"$in": thisoperator_cities}})
 
-    await call.message.answer(text="Идет генерация файла",reply_markup=None)
+    await call.message.answer(text=get_text('support_csv_generating_file',call.from_user.id),reply_markup=None)
     currentdate = datetime.utcnow().strftime("%d.%m.%Y-%I.%M%p")+'_users.csv'
 
     with open(currentdate, 'w', encoding='utf8',newline='') as f:
@@ -389,7 +343,7 @@ async def user_tables_csv(call:types.CallbackQuery, state: FSMContext):
             tod = datetime.now()
           
             lastticket = ticket_collection.find({'userid':x['user_id']}).sort([("ticketid", 1), ("date", -1)]).limit(1)
-
+            lastdate=datetime.now()
             for p in lastticket:
                 lastdate= p['date']
 

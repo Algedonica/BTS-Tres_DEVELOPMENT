@@ -14,3 +14,4 @@ show_ticket_pages=CallbackData("sw_tkt_pgs_fctr","command","page")
 show_broadcast_pages=CallbackData("brdcstfctr","command","param1","param2")
 
 meeting_pick_lang=CallbackData("lngpckfctr","command","param1","param2")
+
