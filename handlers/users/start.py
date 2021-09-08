@@ -9,12 +9,12 @@ from aiogram.types.message import Message
 import json
 import aiogram_broadcaster
 from aiogram_broadcaster import message_broadcaster
-from data.config import language_collection, partner_collection,links_collection,user_collection, staff_collection, settings_collection, pmessages_collection, photos_collection
+from data.config import language_collection, partner_collection,links_collection,user_collection, staff_collection, settings_collection, photos_collection
 from aiogram.types import InlineKeyboardMarkup, InlineKeyboardButton, ReplyKeyboardMarkup, KeyboardButton, message_id
 from loader import dp,bot
 from states import ProjectManage,SupportManage, SetupBTSstates
 from aiogram.dispatcher import FSMContext
-from utils.misc import build_user_menu,get_text, build_support_menu, reverse_check,get_partner_obj, system_text_parser,issupport, isadmin, support_role_check, xstr, photoparser, parse_message_by_tag_name, get_user_came_from,   get_user_city, linkparser, linkparser_default
+from utils.misc import build_user_menu,get_text, build_support_menu, reverse_check,get_partner_obj, system_text_parser,issupport, isadmin, support_role_check, xstr, photoparser, get_user_came_from,   get_user_city, linkparser, linkparser_default
 from aiogram.types import InputMediaPhoto,KeyboardButton, ReplyKeyboardMarkup
 from keyboards.inline import meeting_pick_lang,usersupportchoiceinline, ticket_callback, add_operator_callback, show_support_pages, edit_something_admin, show_cities_pages
 

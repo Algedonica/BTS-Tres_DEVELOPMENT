@@ -3,13 +3,13 @@ from loader import dp,bot
 from handlers.users.echo import scheduler
 from states import ProjectManage,SupportManage, SetupBTSstates
 from datetime import datetime
-from data.config import broadcast_collection, partner_collection,links_collection,user_collection, staff_collection, settings_collection, pmessages_collection, photos_collection
+from data.config import broadcast_collection, partner_collection,links_collection,user_collection, staff_collection, settings_collection, photos_collection
 from aiogram.types import InlineKeyboardMarkup, InlineKeyboardButton, ReplyKeyboardMarkup, KeyboardButton, message_id,InputMediaPhoto
 from aiogram import types
 from aiogram.dispatcher import FSMContext
 import secrets
 import math
-from utils.misc import broadcast_parse_activity,get_text, issupport,build_support_menu,system_text_parser,get_partner_obj,isadmin,support_role_check, xstr, photoparser, parse_message_by_tag_name, getCryptoData, parse_video_by_tag_name, send_to_channel, get_user_city,   get_user_came_from, check_error_ticket
+from utils.misc import broadcast_parse_activity,get_text, issupport,build_support_menu,system_text_parser,get_partner_obj,isadmin,support_role_check, xstr, photoparser, getCryptoData, send_to_channel, get_user_city,   get_user_came_from, check_error_ticket
 from keyboards.inline import show_broadcast_pages
 
 

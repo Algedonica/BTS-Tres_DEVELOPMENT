@@ -16,11 +16,10 @@ staff_collection=db.staff
 settings_collection = db.settings
 dbstates = client.aiogram_fsm
 states_collection=dbstates.aiogram_state
-knowledge_collection = db.knowledge_base
-pmessages_collection = db.personal_message
-videos_collection = db.videos
+
+
 photos_collection=db.photos
-videocircles_collection=db.videocircle
+
 partner_collection=db.partner
 links_collection=db.partnerlinks
 broadcast_collection=db.broadcast

@@ -6,7 +6,7 @@ from datetime import datetime
 from typing import Text
 from aiogram import types
 from loader import dp, bot
-from data.config import inline_materials_collection, links_collection, partner_collection, user_collection, ticket_collection, staff_collection, settings_collection, states_collection, pmessages_collection, channelid
+from data.config import inline_materials_collection, links_collection, partner_collection, user_collection, ticket_collection, staff_collection, settings_collection, states_collection, channelid
 from states import ProjectManage,SupportManage
 from aiogram.types import CallbackQuery,ReplyKeyboardRemove, InputFile, message
 from aiogram.utils.callback_data import CallbackData
@@ -17,7 +17,7 @@ from aiogram.dispatcher.filters import Command
 from aiogram.dispatcher import FSMContext
 from apscheduler.schedulers.asyncio import AsyncIOScheduler
 from aiogram.types import InputMediaPhoto
-from utils.misc import build_operatorcontrol,build_userendsupport,build_user_menu, get_text, get_partner_channel,build_support_menu,system_text_parser,get_partner_obj,isadmin,support_role_check, xstr, photoparser, parse_message_by_tag_name, getCryptoData, parse_video_by_tag_name, send_to_channel, get_user_city,   get_user_came_from, check_error_ticket
+from utils.misc import build_operatorcontrol,build_userendsupport,build_user_menu, get_text, get_partner_channel,build_support_menu,system_text_parser,get_partner_obj,isadmin,support_role_check, xstr, photoparser, getCryptoData,  send_to_channel, get_user_city,   get_user_came_from, check_error_ticket
 from aiogram.utils.parts import safe_split_text
 from aiogram.dispatcher.handler import CancelHandler
 from keyboards.inline import show_ticket_pages,usersupportchoiceinline, ticket_callback, add_operator_callback, show_support_pages, edit_something_admin, show_cities_pages, knowledge_list_call, about_team_call

@@ -1,5 +1,5 @@
 from pymongo import settings
-from data.config import language_collection, partner_collection,staff_collection, ticket_collection, settings_collection, pmessages_collection, videos_collection, photos_collection, videocircles_collection, channelid, user_collection, links_collection
+from data.config import language_collection, partner_collection,staff_collection, ticket_collection, settings_collection,  photos_collection, channelid, user_collection, links_collection
 from loader import dp, bot
 from datetime import datetime
 from aiogram.types import InlineKeyboardMarkup, InlineKeyboardButton, user, KeyboardButton, ReplyKeyboardMarkup
@@ -67,11 +67,11 @@ def get_user_came_from(x):
     cities_obj=asd["came_from"]
     return cities_obj
 
-def parse_message_by_tag_name(x):
-    asd = pmessages_collection.find_one({"tag_name":x})
-    if asd==None:
-        return ''
-    return asd['text']
+# def parse_message_by_tag_name(x):
+#     asd = pmessages_collection.find_one({"tag_name":x})
+#     if asd==None:
+#         return ''
+#     return asd['text']
 
 async def check_error_ticket(x):
     asd = ticket_collection.find_one({'ticketid':x})
@@ -193,11 +193,11 @@ async def check_error_ticket(x):
 # -----------------media----parsers-----------------------
 
 
-def parse_video_by_tag_name(x):
-    asd = videos_collection.find_one({"name":x})
-    if asd==None:
-        return ''
-    return asd['video_id']
+# def parse_video_by_tag_name(x):
+#     asd = videos_collection.find_one({"name":x})
+#     if asd==None:
+#         return ''
+#     return asd['video_id']
 
 def parse_photos_by_tag_name(x):
     asd = photos_collection.find_one({"name":x})
@@ -206,11 +206,11 @@ def parse_photos_by_tag_name(x):
     return asd['photo_id']
 
 
-def parse_videocircles_by_tag_name(x):
-    asd = videocircles_collection.find_one({"name":x})
-    if asd==None:
-        return ''
-    return asd['videocircle_id']
+# def parse_videocircles_by_tag_name(x):
+#     asd = videocircles_collection.find_one({"name":x})
+#     if asd==None:
+#         return ''
+#     return asd['videocircle_id']
 
 def photoparser(x):
     asd = photos_collection.find_one({"name":x})

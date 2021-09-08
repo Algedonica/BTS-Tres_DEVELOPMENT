@@ -3,7 +3,7 @@ import math
 from datetime import datetime
 from aiogram import types
 from loader import dp, bot
-from data.config import channelid,user_collection, ticket_collection, staff_collection, settings_collection, states_collection, pmessages_collection
+from data.config import channelid,user_collection, ticket_collection, staff_collection, settings_collection, states_collection
 from states import ProjectManage,SupportManage
 from aiogram.types import CallbackQuery,ReplyKeyboardRemove, InputFile, video_note
 from aiogram.utils.callback_data import CallbackData
@@ -14,7 +14,7 @@ from aiogram.dispatcher.filters import Command
 from aiogram.dispatcher import FSMContext
 from apscheduler.schedulers.asyncio import AsyncIOScheduler
 from aiogram.types import InputMediaPhoto
-from utils.misc import group_valid_check,isadmin,support_role_check, xstr, photoparser, parse_message_by_tag_name, getCryptoData, parse_video_by_tag_name
+from utils.misc import group_valid_check,isadmin,support_role_check, xstr, photoparser,  getCryptoData
 
 
 
