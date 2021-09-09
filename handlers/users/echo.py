@@ -38,8 +38,57 @@ scheduler.add_job(clearnotified, 'interval', seconds=180)
 
 
 #---------------------------about-----us-------------------------------------
+@dp.message_handler(state=ProjectManage.menu, text=['Simba Storage'])
+async def initialize_simbapick(message: types.Message, state:FSMContext):
+    aboutbutton=InlineKeyboardMarkup(row_width=1, inline_keyboard=[
+        [
+            InlineKeyboardButton(
+                text=get_text('user_simba_about_button_url_text', message.from_user.id),
+                url='https://simba.storage/'
+            ),
+        
+        ],    
+    ])
+    await message.answer_photo(photo=photoparser('simba_photo_ad'), caption=get_text('user_simba_about_text', message.from_user.id), reply_markup=aboutbutton)
 
+@dp.message_handler(state=ProjectManage.menu, text=['Tres'])
+async def initialize_trespick(message: types.Message, state:FSMContext):
+    aboutbutton=InlineKeyboardMarkup(row_width=1, inline_keyboard=[
+        [
+            InlineKeyboardButton(
+                text=get_text('user_tres_about_button_url_text', message.from_user.id),
+                url='https://tres.swiss/'
+            ),
+        
+        ],    
+    ])
+    await message.answer_photo(photo=photoparser('tres_photo_ad'), caption=get_text('user_tres_about_text', message.from_user.id), reply_markup=aboutbutton)
 
+@dp.message_handler(state=ProjectManage.menu, text=['Foster'])
+async def initialize_fosterpick(message: types.Message, state:FSMContext):
+    aboutbutton=InlineKeyboardMarkup(row_width=1, inline_keyboard=[
+        [
+            InlineKeyboardButton(
+                text=get_text('user_foster_about_button_url_text', message.from_user.id),
+                url='https://simba.storage/'
+            ),
+        
+        ],    
+    ])
+    await message.answer_photo(photo=photoparser('foster_photo_ad'), caption=get_text('user_foster_about_text', message.from_user.id), reply_markup=aboutbutton)
+
+@dp.message_handler(state=ProjectManage.menu, text=['Schutz'])
+async def initialize_schutzpick(message: types.Message, state:FSMContext):
+    aboutbutton=InlineKeyboardMarkup(row_width=1, inline_keyboard=[
+        [
+            InlineKeyboardButton(
+                text=get_text('user_schutz_about_button_url_text', message.from_user.id),
+                url='https://schutz.capital/'
+            ),
+        
+        ],    
+    ])
+    await message.answer_photo(photo=photoparser('schutz_photo_ad'), caption=get_text('user_schutz_about_text', message.from_user.id), reply_markup=aboutbutton)
 #---------------------------about-----us-----end-----------------------------
 
 @dp.message_handler(state=ProjectManage.menu, text=['🗣 Получить консультацию', '🗣 Consultation'])
