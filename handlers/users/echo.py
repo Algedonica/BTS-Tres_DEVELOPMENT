@@ -1262,7 +1262,8 @@ async def showcard(call:types.CallbackQuery, callback_data:dict):
         [
             '<b>'+get_text('support_ticket_id_text',call.from_user.id)+thisicket["ticketid"]+'</b> ',
             '<b>'+thisuser['callmeas']+x+':</b> '+thisicket['title'],
-            '<b>'+get_text('support_partner_info_ticket_text',call.from_user.id)+thisuser['city']
+            '<b>'+get_text('support_partner_info_ticket_text',call.from_user.id)+thisuser['city'],
+            '<b>'+thisicket['project']+'</b>'
         ]
     )        
     inlinekeyb=InlineKeyboardMarkup(row_width=1, inline_keyboard=[
@@ -1273,7 +1274,7 @@ async def showcard(call:types.CallbackQuery, callback_data:dict):
         [
         InlineKeyboardButton(
             text=get_text('back_button_text',call.from_user.id),
-            callback_data='tonewtickets'
+            callback_data=show_ticket_pages.new("tonewtickets",page=1)
         ),]
     ])
     photos=await bot.get_user_profile_photos(user_id=thisicket['userid'], limit=1)
