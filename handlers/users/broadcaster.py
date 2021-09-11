@@ -276,8 +276,7 @@ async def show_my_broadcasts(call:types.CallbackQuery):
     ]) 
 
     supportmenubase.add(InlineKeyboardButton(text=get_text('back_button_text',call.from_user.id),callback_data='to_broadcast_admin'))
-    await call.message.edit_media(media=InputMediaPhoto(caption=get_text('support_broadcasts_category_text',call.from_user.id), media=photoparser('broadcast_main_menu')), reply_markup=supportmenubase)
-
+    await call.message.edit_media(media=InputMediaPhoto(caption=get_text('support_broadcasts_category_text',call.from_user.id), media=photoparser('broadcast_menu_createdbr')), reply_markup=supportmenubase)
 
 @dp.callback_query_handler(show_broadcast_pages.filter(command='show_list_broadcasts'),state=[SupportManage.menu])
 async def show_my_active_broadcasts(call:types.CallbackQuery, callback_data:dict):  
@@ -320,7 +319,7 @@ async def show_my_active_broadcasts(call:types.CallbackQuery, callback_data:dict
 
     inlinekeys.add(prevtoadd,nexttoadd)
     inlinekeys.add(InlineKeyboardButton(text=get_text('back_button_text',call.from_user.id),callback_data='my_broadcasts'))
-    await call.message.edit_media(media=InputMediaPhoto(caption=get_text('support_broadcasts_manageactive_text',call.from_user.id), media=photoparser('broadcast_main_menu')), reply_markup=inlinekeys)
+    await call.message.edit_media(media=InputMediaPhoto(caption=get_text('support_broadcasts_manage'+broadcast_type+'_text',call.from_user.id), media=photoparser('broadcast_main_menu_type'+broadcast_type)), reply_markup=inlinekeys)
 
 # Редактирование поста---------------------------------------------------
 

@@ -1155,6 +1155,22 @@ async def operator_write_new_name_support(message: types.Message, state: FSMCont
     await message.answer_photo(photo=photoparser("operatornameupdated"), caption=" ", reply_markup=inlinekeys)
   
 # ----------------здесь инлайн функции-----------------------
+@dp.inline_handler(text="btc", state=SupportManage.menu)
+async def initialize_admin_answerbtc(query: types.InlineQuery):
+    if isadmin(query.from_user.id)==True:
+        html_text=get_text('admin_btc_fast_answer',query.from_user.id)
+        await query.answer(
+            results=[
+                types.InlineQueryResultArticle(
+                    id="1",
+                    title='Быстрый ответ для btc',
+                    input_message_content=types.InputMessageContent(message_text=html_text),
+                    
+                )
+            ],
+            cache_time=0
+        )  
+
 @dp.inline_handler(text="add_operator", state=SupportManage.menu)
 async def initialize_adding_operator_tosys(query: types.InlineQuery):
     if isadmin(query.from_user.id)==False:
@@ -2149,6 +2165,8 @@ async def usercurrenttalk_doc(message: types.Message, state: FSMContext):
 
 
 #-------------------------------------инлайн ответы---------------------------
+
+
 @dp.message_handler( text='/creatematerial', state=SupportManage.menu)
 async def generatematerial(message: types.Message):
     xs=secrets.token_hex(4)+'MATERIAL'+"{:03d}".format(secrets.randbelow(999))
