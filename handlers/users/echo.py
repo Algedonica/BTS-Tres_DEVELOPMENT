@@ -730,11 +730,7 @@ async def adminmenustart(call: types.CallbackQuery):
 ################################################Admin menu - support manage#########################################################
 @dp.callback_query_handler(text='edit_support', state=SupportManage.menu)
 async def admin_menu_edit_support(call: types.CallbackQuery):
-    html_text="\n".join(
-        [
-            ' '
-        ]
-    )
+    html_text=get_text('support_adminmenu_edit_support_menu',call.from_user.id),
     supportmenubase = InlineKeyboardMarkup(row_width=1, inline_keyboard=[
         [InlineKeyboardButton(
             text=get_text('support_admin_menu_edit_support_supports_text',call.from_user.id),
