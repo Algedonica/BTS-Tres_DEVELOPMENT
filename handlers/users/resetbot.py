@@ -259,6 +259,31 @@ async def reverserole_for_staff(message: types.Message, state: FSMContext):
         await message.answer(get_text('support_vm_func_text',message.from_user.id), reply_markup=ReplyKeyboardRemove())    
 
 
+@dp.message_handler(text="/notify", state=[SupportManage.menu])
+async def reversenotifications_for_staff(message: types.Message, state: FSMContext):
+    if issupport(message.from_user.id)==True:
+        thisstaff=staff_collection.find_one({"user_id":message.from_user.id})
+
+        if thisstaff['notified']=='disabled':
+            staff_collection.find_and_modify( 
+                query={"user_id":message.from_user.id}, 
+                update={ "$set": { 'notified': 'none'} }
+                )
+            await message.answer(get_text('support_notify_notifon',message.from_user.id))
+        elif thisstaff['notified']=='none':
+            staff_collection.find_and_modify( 
+                query={"user_id":message.from_user.id}, 
+                update={ "$set": { 'notified': 'disabled'} }
+                )
+            await message.answer(get_text('support_notify_notifoff',message.from_user.id))
+        elif thisstaff['notified']=='notified':
+            staff_collection.find_and_modify( 
+                query={"user_id":message.from_user.id}, 
+                update={ "$set": { 'notified': 'disabled'} }
+                )
+            await message.answer(get_text('support_notify_notifoff',message.from_user.id))
+         
+
 
 
 @dp.message_handler(text="/lang", state=[SupportManage.menu, ProjectManage.menu])
