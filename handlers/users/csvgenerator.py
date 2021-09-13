@@ -71,7 +71,7 @@ async def show_filtered_tables_csv_func(call: types.CallbackQuery, callback_data
     for x in opers:
         galka=""
         if x["user_id"] in opersarray:
-            galka="✔️"
+            galka="✅"
         inlinekeys.add(InlineKeyboardButton(text=galka+x["callmeas"]+' '+x["first_name"]+' ('+support_role_check(x['user_id'])+')', callback_data=csv_tables_call.new('init_csv_filtered',param1=page, param2=x["user_id"])))
 
     
@@ -99,11 +99,7 @@ async def show_filtered_tables_csv_func(call: types.CallbackQuery, callback_data
             text='▶️',
             callback_data=csv_tables_call.new('init_csv_filtered',param1=nextpage, param2="none")
         ) 
-    html_text="\n".join(
-        [
-            ' '
-        ]
-    )
+    html_text=get_text('support_csv_filtered_choose_oper',call.from_user.id)
     inlinekeys.add(prevtoadd,nexttoadd)
     inlinekeys.add(InlineKeyboardButton(
         text=get_text('support_csv_pick_partner',call.from_user.id),  
@@ -149,7 +145,7 @@ async def show_table_cities_csv_func(call: types.CallbackQuery, callback_data:di
     for x in cities_obj:
         galka=""
         if x["system_tag"] in citiesarray:
-            galka="✔️"
+            galka="✅"
         inlinekeys.add(InlineKeyboardButton(text=galka+x["system_tag"]+' - '+x["city_name"], callback_data=csv_tables_call.new('to_csv_cities',param1=page, param2=x["system_tag"])))
 
     data = await state.get_data()
@@ -175,11 +171,7 @@ async def show_table_cities_csv_func(call: types.CallbackQuery, callback_data:di
             text='▶️',
             callback_data=csv_tables_call.new('to_csv_cities',param1=nextpage, param2="none")
         ) 
-    html_text="\n".join(
-        [
-            ' '
-        ]
-    )
+    html_text=get_text('support_csv_filtered_choose_tag',call.from_user.id)
     inlinekeys.add(prevtoadd,nexttoadd)
     inlinekeys.add(InlineKeyboardButton(
         text=get_text('support_csv_pick_date',call.from_user.id),
@@ -195,11 +187,7 @@ async def show_table_cities_csv_func(call: types.CallbackQuery, callback_data:di
 @dp.callback_query_handler(csv_tables_call.filter(command='to_csv_time'), state=[SupportManage.accept_time, SupportManage.inittimecsv])
 async def show_table_time_csv_func(call: types.CallbackQuery, callback_data:dict, state: FSMContext):
     
-    html_text="\n".join(
-        [
-            'Для сбора информации за определенный период необходимо указать даты с - по, в формате: <b>число/месяц/год</b>, как показано в примере выше.'
-        ]
-    )
+    html_text=get_text('support_csv_pick_date_format',call.from_user.id)
     inlinekeys = InlineKeyboardMarkup(row_width=2)
     inlinekeys.add(InlineKeyboardButton(
         text=get_text('back_button_text',call.from_user.id),  
@@ -211,22 +199,16 @@ async def show_table_time_csv_func(call: types.CallbackQuery, callback_data:dict
 @dp.message_handler(state=SupportManage.accept_time)
 async def accept_time_csv_func(message: types.Message, state: FSMContext):
     thismsg=message.text
-    thismsg = thismsg.split(' - ')
-    months=['january', 'february', 'march', 'april', 'may', 'june', 'july', 'august', 'september', 'october', 'november', 'december']
+    thismsg = thismsg.split(' ')
+    
     # try:
     timefrom = thismsg[0]
-    timefrom = timefrom.split(' ')
-    for x in months:
-        if timefrom[1] == x:
-            thismonth = months.index(x)+1 
-    timefrom = datetime(year=int(timefrom[2]), month=thismonth, day=int(timefrom[0]))
+    timefrom = timefrom.split('-')
+    timefrom = datetime(year=int(timefrom[2]), month=int(timefrom[1]), day=int(timefrom[0]))
 
     timeto = thismsg[1]
-    timeto = timeto.split(' ') 
-    for x in months:
-        if timeto[1] == x:
-            thismonth = months.index(x)+1 
-    timeto = datetime(year=int(timeto[2]), month=thismonth, day=int(timeto[0]))
+    timeto = timeto.split('-') 
+    timeto = datetime(year=int(timeto[2]), month=int(timeto[1]), day=int(timeto[0]))
 
 
     try:

@@ -113,7 +113,7 @@ async def broadcasta_go_showpartners(call:types.CallbackQuery,state:FSMContext, 
         galka=""
        
         if y in partnertosend:
-            galka="✔️ "
+            galka="✅ "
            
         inlinekeys.add(InlineKeyboardButton(text=galka+y, callback_data=show_broadcast_pages.new("aor",param1=page, param2=y)))
 
@@ -174,7 +174,7 @@ async def broadcasta_go_showpartners_deleteoradd(call:types.CallbackQuery,state:
         galka=""
       
         if y in partnertosend:
-            galka="✔️ "
+            galka="✅ "
            
         inlinekeys.add(InlineKeyboardButton(text=galka+y, callback_data=show_broadcast_pages.new("aor",param1=page, param2=y)))
 
@@ -222,7 +222,7 @@ async def broadcasta_go_msgyes(call:types.CallbackQuery):
 @dp.message_handler(state=[SupportManage.broadcast_time])
 async def broadcasta_time(message:types.Message,state:FSMContext):
     thistext=message.text
-    thistext=thistext.split(' in ')
+    thistext=thistext.split(' ')
 
     datearr=thistext[0].split('-')
     timearr=thistext[1].split(':')
@@ -505,7 +505,7 @@ async def broadcasta_time(message:types.Message,state:FSMContext):
     except:
         pass
 
-    thistext=message.text.split(' в ')
+    thistext=message.text.split(' ')
     finaltext=thistext[0]+'_'+thistext[1]
     datearr=thistext[0].split('-')
     timearr=thistext[1].split(':')

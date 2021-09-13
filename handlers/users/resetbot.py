@@ -17,11 +17,7 @@ from utils.misc import build_user_menu, build_operatorcontrol, get_text,get_part
 from keyboards.inline import meeting_pick_lang,usersupportchoiceinline, ticket_callback, add_operator_callback, show_support_pages, edit_something_admin, show_cities_pages, knowledge_list_call
 
 @dp.message_handler(text="/reset", state=[
-    ProjectManage.menu, 
-    ProjectManage.awaitingsup,
-    ProjectManage.initializingsup, 
-    ProjectManage.preparingquest, 
-    ProjectManage.onair
+    ProjectManage
     ])
 async def resetbot_byuser(message: types.Message):
     thisicket=ticket_collection.find_one({"userid": message.from_user.id, "$or":[{'isopen':'onair'},{'isopen':'onpause'}, {'isopen':'created'}]})
@@ -115,24 +111,14 @@ async def resetbot_byuser(message: types.Message):
             await bot.send_photo(chat_id=thisicket['operator'],parse_mode='HTML', photo=photoparser('clientfinished'), reply_markup=ReplyKeyboardRemove())
             await bot.send_message(chat_id=thisicket['operator'], text=html_text2,parse_mode='HTML',reply_markup=endinline)
     html_text,defaultmenu=build_user_menu(message.from_user.id)
-    await message.answer_photo(photo=photoparser('operatorticketfinished') ,parse_mode='HTML')
+    # await message.answer_photo(photo=photoparser('operatorticketfinished') ,parse_mode='HTML')
     await message.answer_photo(photo=photoparser('usermainmenu'), caption=html_text,parse_mode='HTML',reply_markup=defaultmenu)
     await ProjectManage.menu.set()
 
 
 
 @dp.message_handler(text="/reset", state=[
-    SupportManage.menu,
-    SupportManage.awaitingsup, 
-    SupportManage.initializingsup, 
-    SupportManage.onair, 
-    SupportManage.changeoperatorname, 
-    SupportManage.addcityinput,  
-    SupportManage.initcsv,  
-    SupportManage.inittimecsv,  
-    SupportManage.accept_time,  
-    SupportManage.knowledge_set_title,  
-    SupportManage.knowledge_set_descr,
+    SupportManage
     ])
 async def resetbot_byoperator(message: types.Message, state: FSMContext):
     thisicket=ticket_collection.find_one({"operator": message.from_user.id,"isopen": "onair"}) 
@@ -228,7 +214,7 @@ async def resetbot_byoperator(message: types.Message, state: FSMContext):
             ticket_collection.update({"ticketid":thisicket['ticketid']},{"$set":{"isopen":"closedbyoperator","messagedata":datamessagehere,'original_id':mesid['message_id'], 'original_channel':mesid['sender_chat']['id']},'$addToSet': { 'extrafield': extradd }})
             
     html_text,supportmenubase=build_support_menu(message.from_user.id)    
-    await bot.send_message(chat_id=message.from_user.id,text=get_text('support_endeddialogue_text', message.from_user.id) ,parse_mode='HTML',reply_markup=ReplyKeyboardRemove())
+    await bot.send_message(chat_id=message.from_user.id,text='reset done',parse_mode='HTML',reply_markup=ReplyKeyboardRemove())
     await bot.send_photo(chat_id=message.from_user.id,photo=photoparser("operatormainmenu"), caption=html_text,parse_mode='HTML',reply_markup=supportmenubase ) 
     
     await SupportManage.menu.set()
@@ -259,7 +245,7 @@ async def reverserole_for_staff(message: types.Message, state: FSMContext):
         await message.answer(get_text('support_vm_func_text',message.from_user.id), reply_markup=ReplyKeyboardRemove())    
 
 
-@dp.message_handler(text="/notify", state=[SupportManage.menu])
+@dp.message_handler(text="/push", state=[SupportManage.menu])
 async def reversenotifications_for_staff(message: types.Message, state: FSMContext):
     if issupport(message.from_user.id)==True:
         thisstaff=staff_collection.find_one({"user_id":message.from_user.id})
@@ -283,8 +269,6 @@ async def reversenotifications_for_staff(message: types.Message, state: FSMConte
                 )
             await message.answer(get_text('support_notify_notifoff',message.from_user.id))
          
-
-
 
 @dp.message_handler(text="/lang", state=[SupportManage.menu, ProjectManage.menu])
 async def change_lang_for_staff(message: types.Message, state: FSMContext):

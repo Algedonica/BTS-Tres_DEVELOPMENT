@@ -25,7 +25,6 @@ from keyboards.inline import show_ticket_pages,usersupportchoiceinline, ticket_c
 
 from aiogram.utils.exceptions import BotBlocked
 
-from PIL import Image, ImageChops,ImageDraw, ImageFont
 
 scheduler = AsyncIOScheduler()
 async def clearnotified():
@@ -1083,7 +1082,7 @@ async def system_operator_city_change_func(call: types.CallbackQuery, callback_d
         galka=""
         deleteoradd="1"
         if i['system_tag'] in cities:
-            galka="✔️"
+            galka="✅"
             deleteoradd="0"
         inlinekeys.add(InlineKeyboardButton(text=galka+i["city_name"]+' : '+i["system_tag"], callback_data=edit_something_admin.new('ecu',i["system_tag"],deleteoradd,int(callback_data.get("page")) )))
     inlinekeys.add(InlineKeyboardButton(text=get_text('support_am_es_back_to+oper_button_text',call.from_user.id),callback_data=show_support_pages.new("openoperator",page=int(callback_data.get("page")))))
@@ -1114,7 +1113,7 @@ async def system_operator_city_change_and_update_func(call: types.CallbackQuery,
         galka=""
         deleteoradd="1"
         if i['system_tag'] in cities:
-            galka="✔️"
+            galka="✅"
             deleteoradd="0"
         inlinekeys.add(InlineKeyboardButton(text=galka+i["city_name"]+' : '+i["system_tag"], callback_data=edit_something_admin.new('ecu',i["system_tag"],deleteoradd,int(callback_data.get("userid")) )))
     inlinekeys.add(InlineKeyboardButton(text=get_text('support_am_es_back_to+oper_button_text',call.from_user.id),callback_data=show_support_pages.new("openoperator",page=int(callback_data.get("userid")))))
@@ -1270,12 +1269,27 @@ async def showcard(call:types.CallbackQuery, callback_data:dict):
     x=''
     if thisuser['username']!='none':
         x=' (@'+thisuser['username']+')'
+
+    notread_string=' '
+    notread_count=0
+    notread=thisicket['extrafield']
+    for lm in notread:
+        if lm['isread']==False:
+            notread_count+=1
+
+    if notread_count > 0:
+        notread_string="\n".join([
+            '❗️ '+str(notread_count)+get_text('support_notread_counter_msg',call.from_user.id)
+        ])
+
     html_text="\n".join(
         [
             '<b>'+get_text('support_ticket_id_text',call.from_user.id)+thisicket["ticketid"]+'</b> ',
             '<b>'+thisuser['callmeas']+x+':</b> '+thisicket['title'],
             '<b>'+get_text('support_partner_info_ticket_text',call.from_user.id)+thisuser['city'],
-            '<b>'+thisicket['project']+'</b>'
+            '<b>'+thisicket['project']+'</b>',
+            ' ',
+            notread_string
         ]
     )        
     inlinekeyb=InlineKeyboardMarkup(row_width=1, inline_keyboard=[
