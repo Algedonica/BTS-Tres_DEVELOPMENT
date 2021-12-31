@@ -1,5 +1,5 @@
 from pymongo import settings
-from data.config import language_collection, partner_collection,staff_collection, ticket_collection, settings_collection,  photos_collection, channelid, user_collection, links_collection
+from data.config import lang_links_collection, language_collection, partner_collection,staff_collection, ticket_collection, settings_collection,  photos_collection, channelid, user_collection, links_collection
 from loader import dp, bot
 from datetime import datetime
 from aiogram.types import InlineKeyboardMarkup, InlineKeyboardButton, user, KeyboardButton, ReplyKeyboardMarkup
@@ -298,13 +298,13 @@ def build_user_menu(x):
                 KeyboardButton(text=get_text('user_mainmenu_defbutton_text', x))
             ],
             [
-                KeyboardButton(text='Simba Storage'),
-                KeyboardButton(text='Tres'),
+                
+                KeyboardButton(text='TRES'),
             ],
             [
-                KeyboardButton(text='Foster'),
+                KeyboardButton(text='Simba Storage'),
                 KeyboardButton(text='Schutz'),
-            
+                # KeyboardButton(text='Foster'),
             ]
         ],
         resize_keyboard=True
@@ -367,6 +367,12 @@ def get_text(text_code, user_id):
     finaltext=lang_obj[user_lang]
     return finaltext
 
+def get_link(link_code, user_id):
+    link_obj=lang_links_collection.find_one({'link_code':link_code})
+    thisuser=user_collection.find_one({'user_id':user_id})
+    user_lang=thisuser['lang_code']
+    finaltext=link_obj[user_lang]
+    return finaltext
 
 def broadcast_parse_activity(status, user_id):
 

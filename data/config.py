@@ -16,7 +16,7 @@ staff_collection=db.staff
 settings_collection = db.settings
 dbstates = client.aiogram_fsm
 states_collection=dbstates.aiogram_state
-
+lang_links_collection=db.links
 
 photos_collection=db.photos
 

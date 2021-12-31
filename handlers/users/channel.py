@@ -15,7 +15,7 @@ from aiogram.dispatcher import FSMContext
 from apscheduler.schedulers.asyncio import AsyncIOScheduler
 from aiogram.types import InputMediaPhoto
 from utils.misc import group_valid_check,isadmin,support_role_check, xstr, photoparser,  getCryptoData
-
+import asyncio
 
 
 
@@ -34,7 +34,9 @@ async def groupcatcher(message: types.Message):
         getmsg=ticket_collection.find_one({'original_channel':message.forward_from_chat.id, 'original_id':message.forward_from_message_id})
         if getmsg!=None:
             thismsgs=getmsg['extrafield']
+            i=0
             for x in thismsgs:
+                i+=1
                 if x['type']=='voice':
                     await bot.send_message(chat_id=thismsggrpid, text=x['text'], reply_to_message_id=thismsgid)
                     await bot.send_voice(chat_id=thismsggrpid, voice=x['mediaid'], reply_to_message_id=thismsgid)
@@ -49,11 +51,17 @@ async def groupcatcher(message: types.Message):
                     await bot.send_document(chat_id=thismsggrpid, document=x['mediaid'], caption=x['text'], reply_to_message_id=thismsgid)
                 else:
                     await bot.send_message(chat_id=thismsggrpid, text=x['text'], reply_to_message_id=thismsgid)
+
+                if i>18:
+                    await asyncio.sleep(62)
+                    i=1
         else:
             getmsg_partner=ticket_collection.find_one({'original_channel_partner':message.forward_from_chat.id, 'original_id_partner':message.forward_from_message_id})
             if getmsg_partner!=None:
                 thismsgs=getmsg_partner['extrafield']
+                i=0
                 for x in thismsgs:
+                    i+=1
                     if x['type']=='voice':
                         await bot.send_message(chat_id=thismsggrpid, text=x['text'], reply_to_message_id=thismsgid)
                         await bot.send_voice(chat_id=thismsggrpid, voice=x['mediaid'], reply_to_message_id=thismsgid)
@@ -68,3 +76,10 @@ async def groupcatcher(message: types.Message):
                         await bot.send_document(chat_id=thismsggrpid, document=x['mediaid'], caption=x['text'], reply_to_message_id=thismsgid)
                     else:
                         await bot.send_message(chat_id=thismsggrpid, text=x['text'], reply_to_message_id=thismsgid)
+                        
+                    if i>18:
+                        await asyncio.sleep(62)
+                        i=1
+
+
+                        

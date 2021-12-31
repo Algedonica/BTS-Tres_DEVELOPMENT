@@ -8,7 +8,7 @@ from aiogram import types
 from loader import dp, bot
 from data.config import inline_materials_collection, links_collection, partner_collection, user_collection, ticket_collection, staff_collection, settings_collection, states_collection, channelid
 from states import ProjectManage,SupportManage
-from aiogram.types import CallbackQuery,ReplyKeyboardRemove, InputFile, message
+from aiogram.types import CallbackQuery,ReplyKeyboardRemove, InputFile, message, reply_keyboard
 from aiogram.utils.callback_data import CallbackData
 from utils.misc.logging import logging
 from utils.misc import rate_limit
@@ -17,7 +17,7 @@ from aiogram.dispatcher.filters import Command
 from aiogram.dispatcher import FSMContext
 from apscheduler.schedulers.asyncio import AsyncIOScheduler
 from aiogram.types import InputMediaPhoto
-from utils.misc import build_operatorcontrol,build_userendsupport,build_user_menu, get_text, get_partner_channel,build_support_menu,system_text_parser,get_partner_obj,isadmin,support_role_check, xstr, photoparser, getCryptoData,  send_to_channel, get_user_city,   get_user_came_from, check_error_ticket
+from utils.misc import get_link, build_operatorcontrol,build_userendsupport,build_user_menu, get_text, get_partner_channel,build_support_menu,system_text_parser,get_partner_obj,isadmin,support_role_check, xstr, photoparser, getCryptoData,  send_to_channel, get_user_city,   get_user_came_from, check_error_ticket
 from aiogram.utils.parts import safe_split_text
 from aiogram.dispatcher.handler import CancelHandler
 from keyboards.inline import show_ticket_pages,usersupportchoiceinline, ticket_callback, add_operator_callback, show_support_pages, edit_something_admin, show_cities_pages, knowledge_list_call, about_team_call
@@ -39,55 +39,293 @@ scheduler.add_job(clearnotified, 'interval', seconds=180)
 #---------------------------about-----us-------------------------------------
 @dp.message_handler(state=ProjectManage.menu, text=['Simba Storage'])
 async def initialize_simbapick(message: types.Message, state:FSMContext):
-    aboutbutton=InlineKeyboardMarkup(row_width=1, inline_keyboard=[
+    aboutbutton=InlineKeyboardMarkup(row_width=2, inline_keyboard=[
+        [InlineKeyboardButton(
+            text=get_text('user_simba_about_button_url_text', message.from_user.id),
+            url=get_link('user_simba_about_button_url_link', message.from_user.id)
+        )],
+        [InlineKeyboardButton(
+            text=get_text('user_simba_about_button_url_text_partner', message.from_user.id),
+            url=get_link('user_simba_about_button_url_link_partner', message.from_user.id)
+        )],
         [
+            
             InlineKeyboardButton(
-                text=get_text('user_simba_about_button_url_text', message.from_user.id),
-                url='https://simba.storage/'
+                text=get_text('user_simba_about_button_url_text_pres', message.from_user.id),
+                url=get_link('user_simba_about_button_url_link_pres', message.from_user.id)
             ),
-        
-        ],    
-    ])
-    await message.answer_photo(photo=photoparser('simba_photo_ad'), caption=get_text('user_simba_about_text', message.from_user.id), reply_markup=aboutbutton)
+            InlineKeyboardButton(
+                text=get_text('user_simba_about_button_url_text_pres_mob', message.from_user.id),
+                url=get_link('user_simba_about_button_url_link_pres_mob', message.from_user.id)
+            )
+        ],
+        [
+            
+            InlineKeyboardButton(
+                text=get_text('user_simba_about_button_callback_text_states', message.from_user.id),
+                callback_data='usrcllbck_simba_states'
+            ),
+            InlineKeyboardButton(
+                text=get_text('user_simba_about_button_callback_text_instructions', message.from_user.id),
+                callback_data='usrcllbck_simba_instructions'
+            )
+        ],
+        [InlineKeyboardButton(
+            text=get_text('user_simba_about_button_callback_faq', message.from_user.id),
+            callback_data='usrcllbck_simba_faq'
+        )]
 
-@dp.message_handler(state=ProjectManage.menu, text=['Tres'])
+    ])
+    await message.answer_photo(photo=photoparser('simba_photo_ad'))
+    await message.answer(text=get_text('user_simba_about_text_one', message.from_user.id), disable_web_page_preview=True,reply_markup=aboutbutton)
+
+
+@dp.callback_query_handler(text='usrcllbck_simba_getback', state=[ProjectManage.menu])
+async def initialize_usrcllbck_get_back(call:types.CallbackQuery, state:FSMContext):
+    aboutbutton=InlineKeyboardMarkup(row_width=2, inline_keyboard=[
+        [InlineKeyboardButton(
+            text=get_text('user_simba_about_button_url_text', call.from_user.id),
+            url=get_link('user_simba_about_button_url_link', call.from_user.id)
+        )],
+        [InlineKeyboardButton(
+            text=get_text('user_simba_about_button_url_text_partner', call.from_user.id),
+            url=get_link('user_simba_about_button_url_link_partner', call.from_user.id)
+        )],
+        [
+            
+            InlineKeyboardButton(
+                text=get_text('user_simba_about_button_url_text_pres', call.from_user.id),
+                url=get_link('user_simba_about_button_url_link_pres', call.from_user.id)
+            ),
+            InlineKeyboardButton(
+                text=get_text('user_simba_about_button_url_text_pres_mob', call.from_user.id),
+                url=get_link('user_simba_about_button_url_link_pres_mob', call.from_user.id)
+            )
+        ],
+        [
+            
+            InlineKeyboardButton(
+                text=get_text('user_simba_about_button_callback_text_states', call.from_user.id),
+                callback_data='usrcllbck_simba_states'
+            ),
+            InlineKeyboardButton(
+                text=get_text('user_simba_about_button_callback_text_instructions', call.from_user.id),
+                callback_data='usrcllbck_simba_instructions'
+            )
+        ],
+        [InlineKeyboardButton(
+            text=get_text('user_simba_about_button_callback_faq', call.from_user.id),
+            callback_data='usrcllbck_simba_faq'
+        )]
+
+    ])
+    await call.message.edit_text(text=get_text('user_simba_about_text_one', call.from_user.id), disable_web_page_preview=True,reply_markup=aboutbutton)
+
+@dp.callback_query_handler(text='usrcllbck_simba_states', state=[ProjectManage.menu])
+async def initialize_usrcllbck_simba_states(call:types.CallbackQuery, state:FSMContext):
+    aboutbutton=InlineKeyboardMarkup(row_width=2, inline_keyboard=[
+        [InlineKeyboardButton(
+            text=get_text('back_button_text', call.from_user.id),
+            callback_data='usrcllbck_simba_getback'
+        )]
+    ])
+    await call.message.edit_text(text=get_text('user_simba_about_text_states', call.from_user.id), disable_web_page_preview=True, reply_markup=aboutbutton)
+
+@dp.callback_query_handler(text='usrcllbck_simba_instructions', state=[ProjectManage.menu])
+async def initialize_usrcllbck_simba_instructions(call:types.CallbackQuery, state:FSMContext):
+    aboutbutton=InlineKeyboardMarkup(row_width=2, inline_keyboard=[
+        [InlineKeyboardButton(
+            text=get_text('back_button_text', call.from_user.id),
+            callback_data='usrcllbck_simba_getback'
+        )]
+    ])
+    await call.message.edit_text(text=get_text('user_simba_about_text_instructions', call.from_user.id), reply_markup=aboutbutton, disable_web_page_preview=True)
+
+@dp.callback_query_handler(text='usrcllbck_simba_faq', state=[ProjectManage.menu])
+async def initialize_usrcllbck_simba_faq(call:types.CallbackQuery, state:FSMContext):
+    aboutbutton=InlineKeyboardMarkup(row_width=2, inline_keyboard=[
+        [InlineKeyboardButton(
+            text=get_text('back_button_text', call.from_user.id),
+            callback_data='usrcllbck_simba_getback'
+        )]
+    ])
+    await call.message.edit_text(text=get_text('user_simba_about_text_faq', call.from_user.id), reply_markup=aboutbutton, disable_web_page_preview=True)
+
+
+
+
+
+
+
+
+
+
+
+#-------------------------------------------Tres--------------------------------------------
+@dp.message_handler(state=ProjectManage.menu, text=['TRES'])
 async def initialize_trespick(message: types.Message, state:FSMContext):
-    aboutbutton=InlineKeyboardMarkup(row_width=1, inline_keyboard=[
+    aboutbutton=InlineKeyboardMarkup(row_width=2, inline_keyboard=[
         [
-            InlineKeyboardButton(
-                text=get_text('user_tres_about_button_url_text', message.from_user.id),
-                url='https://tres.swiss/'
-            ),
+        InlineKeyboardButton(
+            text=get_text('user_tres_about_button_callback_another', message.from_user.id),
+            callback_data='usrcllbck_tres_another'
+        ),
+        InlineKeyboardButton(
+            text=get_text('user_tres_about_button_url_faq', message.from_user.id),
+            url=get_link('user_tres_about_button_url_faq', message.from_user.id)
+        ),
         
-        ],    
-    ])
-    await message.answer_photo(photo=photoparser('tres_photo_ad'), caption=get_text('user_tres_about_text', message.from_user.id), reply_markup=aboutbutton)
+        
+        ],
+        [
+        InlineKeyboardButton(
+            text=get_text('user_tres_about_button_url_text_site', message.from_user.id),
+            url=get_link('user_tres_about_button_url_link_site', message.from_user.id)
+        ),
+        InlineKeyboardButton(
+            text=get_text('user_tres_about_button_url_text_buytres', message.from_user.id),
+            url=get_link('user_tres_about_button_url_link_buytres', message.from_user.id)
+        )
+        ],
+        [
+            
+            InlineKeyboardButton(
+                text=get_text('user_tres_about_button_url_text_pres', message.from_user.id),
+                url=get_link('user_tres_about_button_url_link_pres', message.from_user.id)
+            ),
+            InlineKeyboardButton(
+                text=get_text('user_tres_about_button_url_text_pres_mob', message.from_user.id),
+                url=get_link('user_tres_about_button_url_link_pres_mob', message.from_user.id)
+            )
+        ],
+        [InlineKeyboardButton(
+            text=get_text('user_tres_about_button_url_text_club', message.from_user.id),
+            url=get_link('user_tres_about_button_url_link_club', message.from_user.id)
+        ),],
+        
 
-@dp.message_handler(state=ProjectManage.menu, text=['Foster'])
-async def initialize_fosterpick(message: types.Message, state:FSMContext):
-    aboutbutton=InlineKeyboardMarkup(row_width=1, inline_keyboard=[
-        [
-            InlineKeyboardButton(
-                text=get_text('user_foster_about_button_url_text', message.from_user.id),
-                url='https://simba.storage/'
-            ),
-        
-        ],    
     ])
-    await message.answer_photo(photo=photoparser('foster_photo_ad'), caption=get_text('user_foster_about_text', message.from_user.id), reply_markup=aboutbutton)
+    await message.answer_photo(photo=photoparser('tres_photo_ad'))
+    await message.answer(text=get_text('user_tres_about_text_one', message.from_user.id), disable_web_page_preview=True,reply_markup=aboutbutton)
+
+
+
+@dp.callback_query_handler(text='usrcllbck_tres_another', state=[ProjectManage.menu])
+async def initialize_usrcllbck_tres_details(call:types.CallbackQuery, state:FSMContext):
+    aboutbutton=InlineKeyboardMarkup(row_width=2, inline_keyboard=[
+        [InlineKeyboardButton(
+            text=get_text('back_button_text', call.from_user.id),
+            callback_data='usrcllbck_tres_getback'
+        )]
+    ])
+    await call.message.edit_text(text=get_text('user_tres_about_text_detail', call.from_user.id), disable_web_page_preview=True, reply_markup=aboutbutton)
+
+
+@dp.callback_query_handler(text='usrcllbck_tres_getback', state=[ProjectManage.menu])
+async def initialize_usrcllbcktres_get_back(call:types.CallbackQuery, state:FSMContext):
+    aboutbutton=InlineKeyboardMarkup(row_width=2, inline_keyboard=[
+        [
+        InlineKeyboardButton(
+            text=get_text('user_tres_about_button_callback_another', call.from_user.id),
+            callback_data='usrcllbck_tres_another'
+        ),
+        InlineKeyboardButton(
+            text=get_text('user_tres_about_button_url_faq', call.from_user.id),
+            url=get_link('user_tres_about_button_url_faq', call.from_user.id)
+        ),
+        
+        
+        ],
+        [
+        InlineKeyboardButton(
+            text=get_text('user_tres_about_button_url_text_site', call.from_user.id),
+            url=get_link('user_tres_about_button_url_link_site', call.from_user.id)
+        ),
+        InlineKeyboardButton(
+            text=get_text('user_tres_about_button_url_text_buytres', call.from_user.id),
+            url=get_link('user_tres_about_button_url_link_buytres', call.from_user.id)
+        )
+        ],
+        [
+            
+            InlineKeyboardButton(
+                text=get_text('user_tres_about_button_url_text_pres', call.from_user.id),
+                url=get_link('user_tres_about_button_url_link_pres', call.from_user.id)
+            ),
+            InlineKeyboardButton(
+                text=get_text('user_tres_about_button_url_text_pres_mob', call.from_user.id),
+                url=get_link('user_tres_about_button_url_link_pres_mob', call.from_user.id)
+            )
+        ],
+        [InlineKeyboardButton(
+            text=get_text('user_tres_about_button_url_text_club', call.from_user.id),
+            url=get_link('user_tres_about_button_url_link_club', call.from_user.id)
+        ),],
+        
+
+    ])
+    await call.message.edit_text(text=get_text('user_tres_about_text_one', call.from_user.id), disable_web_page_preview=True,reply_markup=aboutbutton)
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+##-------------------------------------------------------------------------------------------------
+# @dp.message_handler(state=ProjectManage.menu, text=['Foster'])
+# async def initialize_fosterpick(message: types.Message, state:FSMContext):
+#     aboutbutton=InlineKeyboardMarkup(row_width=1, inline_keyboard=[
+#         [
+#             InlineKeyboardButton(
+#                 text=get_text('user_foster_about_button_url_text', message.from_user.id),
+#                 url='https://simba.storage/'
+#             ),
+        
+#         ],    
+#     ])
+#     await message.answer_photo(photo=photoparser('foster_photo_ad'), caption=get_text('user_foster_about_text', message.from_user.id), reply_markup=aboutbutton)
 
 @dp.message_handler(state=ProjectManage.menu, text=['Schutz'])
 async def initialize_schutzpick(message: types.Message, state:FSMContext):
-    aboutbutton=InlineKeyboardMarkup(row_width=1, inline_keyboard=[
+    aboutbutton=InlineKeyboardMarkup(row_width=2, inline_keyboard=[
         [
+            
             InlineKeyboardButton(
-                text=get_text('user_schutz_about_button_url_text', message.from_user.id),
-                url='https://schutz.capital/'
+                text=get_text('user_schutz_about_button_url_text_pres', message.from_user.id),
+                url=get_link('user_schutz_about_button_url_link_pres', message.from_user.id)
             ),
-        
-        ],    
+            InlineKeyboardButton(
+                text=get_text('user_schutz_about_button_url_text_pres_mob', message.from_user.id),
+                url=get_link('user_schutz_about_button_url_link_pres_mob', message.from_user.id)
+            )
+        ],
+        [InlineKeyboardButton(
+            text=get_text('user_schutz_about_button_url_text_faq', message.from_user.id),
+            url=get_link('user_schutz_about_button_url_link_faq', message.from_user.id)
+        )],
+        [InlineKeyboardButton(
+            text=get_text('user_schutz_about_button_url_text', message.from_user.id),
+            url=get_link('user_schutz_about_button_url_link', message.from_user.id)
+        )]
+
     ])
-    await message.answer_photo(photo=photoparser('schutz_photo_ad'), caption=get_text('user_schutz_about_text', message.from_user.id), reply_markup=aboutbutton)
+    await message.answer_photo(photo=photoparser('schutz_photo_ad'))
+    await message.answer(text=get_text('user_schutz_about_text_one', message.from_user.id))
+    await message.answer(text=get_text('user_schutz_about_text_two', message.from_user.id,), reply_markup=aboutbutton, disable_web_page_preview=True)
 #---------------------------about-----us-----end-----------------------------
 
 @dp.message_handler(state=ProjectManage.menu, text=['🗣 Получить консультацию', '🗣 Consultation'])
